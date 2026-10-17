@@ -1,0 +1,12 @@
+{
+  "unet/rmse": 2.5509927328133264,
+  "unet/r2": 0.9901782299236759,
+  "unet/r2_per_sample": 0.8790312395768544,
+  "unet/max_absolute_error": 11.164853922526042,
+  "unet/mean_absolute_error": 1.8292621136109035,
+  "unet/mape_percent": 0.5086561577358323,
+  "unet/pape_percent": 3.123014122945185,
+  "unet/max_temperature_error": 1.1855121154785155,
+  "unet/topk50_temperature_difference": 1.4639893988037103,
+  "n_test": 3000
+}

@@ -66,9 +66,21 @@ Assertions on output: `O1` `field` contains no NaN/Inf; `O2` `tmax == max(field)
 
 | metric                              | gate                     | rule                                      |
 |-------------------------------------|--------------------------|-------------------------------------------|
-| field MAE over all test samples     | `TBD(S2.2)` K            | baseline MAE × 1.1                        |
-| worst-5 % per-sample MAE            | `TBD(S2.2)` K            | 95th percentile of baseline per-sample MAE × 1.1 |
-| `tmax` absolute error (median)      | `TBD(S2.2)` K            | baseline × 1.1                            |
+| field MAE over all test samples     | **2.012 K** (baseline 1.829 K) | baseline MAE × 1.1                   |
+| worst-5 % per-sample MAE            | **3.792 K** (baseline 3.447 K) | 95th percentile of baseline per-sample MAE × 1.1 |
+| `tmax` absolute error (median)      | **0.952 K** (baseline 0.865 K) | baseline × 1.1                       |
+
+Baseline values were measured in S2.2 by running the unmodified IC-ThermBench
+evaluation on the authors' level4 U-Net checkpoint (`docs/results/baseline_unet_level4.json`,
+dataset-wide averages, within 5e-4 K of the authors' published numbers) and
+`docs/results/baseline_unet_level4_per_sample.json` (per-sample distribution, from
+`tools/baseline_per_sample.py`). Environment and timings: `docs/results/baseline_env.json`;
+discussion: `docs/results/baseline_notes.md`.
+
+Known limitation recorded at the same time: the *location* of the hotspot is not
+reproduced reliably by the baseline (argmax of prediction equals argmax of label in
+3.7 % of test samples, within 2 cells in 45 %). `tmax_index` in §3 is therefore
+informative only and carries no gate; S2b revisits this.
 
 The gate is enforced by a test (`S6.1`) on a fixed 50-sample subset; a failing gate fails
 the build. The 1.1 factor leaves room for fp32 ONNX export drift and nothing else.

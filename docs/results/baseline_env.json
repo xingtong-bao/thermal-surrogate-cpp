@@ -1,0 +1,16 @@
+{
+  "python": "3.10.22",
+  "torch": "2.0.1",
+  "numpy": "1.26.4",
+  "os": "Darwin 25.5.0 (arm64)",
+  "cpu": "Apple M4",
+  "device": "cpu",
+  "seed": 0,
+  "per_channel_norm": 1,
+  "checkpoint": "checkpoints/level4_UNet/model.pt",
+  "eval_batch": 20,
+  "wall_time_s": {
+    "level4_test": 122,
+    "level5_zeroshot": 133
+  }
+}
