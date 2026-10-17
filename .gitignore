@@ -1,0 +1,36 @@
+# --- internal planning notes: never published ---
+docs/internal/
+*.private.md
+notes/
+roadmap*
+
+# --- data, checkpoints, exported models (documented with download steps + SHA-256) ---
+data/
+datasets/
+checkpoints/
+*.mat
+*.h5
+*.pt
+*.pth
+*.onnx
+*.zip
+
+# --- build ---
+build/
+build-*/
+cmake-build-*/
+_deps/
+CMakeUserPresets.json
+compile_commands.json
+
+# --- python ---
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.ipynb_checkpoints/
+
+# --- secrets / local ---
+.env
+*.local
+.DS_Store
