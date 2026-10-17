@@ -73,8 +73,8 @@
       "train_max": 0.20807699859142303
     }
   ],
-  "oob_scale_description": "Out-of-distribution margin as a fraction of (train_max - train_min) per channel; a value outside [train_min - margin, train_max + margin] triggers fallback (contract rule I4/F1). Derived from the extrapolation curve in S2b.3, never chosen by hand.",
-  "oob_scale": null,
+  "oob_scale_description": "Out-of-distribution margin as a fraction of (train_max - train_min) per channel; a value outside [train_min - margin, train_max + margin] triggers fallback (contract rule I4/F1). Set to 0.0 in S2b.3 from the level5 extrapolation data (docs/results/extrapolation_notes.md), never chosen by hand. A second guard, the layout-novelty score (contract rule I5, parameters in contract/stats.json), covers what a range check cannot.",
+  "oob_scale": 0.0,
   "$defs": {
     "finite_number": {
       "type": "number"

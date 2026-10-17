@@ -59,8 +59,20 @@ Assertions checked before inference (any failure is a hard reject, see §5):
 - `I3` channel count equals the model's `input_channels` recorded in `models/metadata.json`.
 - `I4` for every channel c: `min_c - margin_c <= value <= max_c + margin_c`, where
   `margin_c = oob_scale * (max_c - min_c)` and `oob_scale` comes from `stats.json`
-  (default `TBD(S2b.3)`, derived from the extrapolation curve). Violation is an
-  out-of-distribution (OOD) condition, not an error: it triggers fallback (§5).
+  (`oob_scale = 0.0`, decided in S2b.3: 80 % of the unseen-layout set lies inside the
+  training range and still fails the accuracy gate by 3–16×, so no margin is justified).
+  Violation is an out-of-distribution (OOD) condition, not an error: it triggers
+  fallback (§5).
+- `I5` layout novelty: the configuration vector of the input (chip size x, chip size y,
+  number of chiplets, total power, max power density, mean chiplet area), standardized
+  with the training mean/std in `stats.json → layout_novelty`, must lie within distance
+  `threshold` (0.091) of its nearest training sample. This is the guard the range check
+  cannot provide: the model has learned the ten chip configurations of its training set
+  (S2b.1, S2b.3), and inputs from other configurations are OOD even when every channel is
+  in range. Violation is an OOD condition like `I4`; `oob_channels` then contains
+  `"layout"`. Measured in S2b.3: rejects 100 % of the unseen-layout set and 1 % of the
+  in-support test set. Known relaxation not applied: `ambient_K` extrapolates safely to
+  1.5× its range (true error +0.2 K), so `I4` is over-conservative on that channel.
 
 ## 3. Output
 

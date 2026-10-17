@@ -164,10 +164,41 @@
     "y_std": 29.173845291137695,
     "max_relative_difference_vs_train_split": 1.4122039002249424e-05
   },
-  "oob_scale": null,
+  "oob_scale": 0.0,
   "notes": [
     "grid_x varies along loader axis Y (index 2) and grid_y along loader axis X (index 1): the MATLAB source is column-major and names follow its convention. Treat the (X, Y) axis names as labels of a fixed layout, not as geometry.",
     "chiplet_power is one scalar per chiplet broadcast over its footprint, so the sum over cells is NOT the chip power.",
     "ambient_K, h_w_m2k and r_convec_k_per_w are constant within a sample (global boundary conditions encoded as maps)."
-  ]
+  ],
+  "oob_scale_note": "S2b.3: 80 % of level5 lies inside the per-channel training range and still fails the gate by 3-16x, so no margin is justified; the range check is necessary but not sufficient (see layout_novelty).",
+  "layout_novelty": {
+    "description": "Contract rule I5. Score = Euclidean distance, in training-std units, from the configuration vector of the input to the nearest level4 training sample; score > threshold is an OOD condition. Decided in S2b.3 (docs/results/extrapolation_notes.md): rejects 100 % of level5, 1 % of level4 test.",
+    "features": [
+      "chip_x_mm",
+      "chip_y_mm",
+      "n_chiplets",
+      "total_power_W",
+      "max_power_density_W_mm2",
+      "mean_chiplet_area_mm2"
+    ],
+    "train_mean": [
+      44.1,
+      43.8,
+      18.156296296296297,
+      606.1051851851852,
+      1.5097249119038774,
+      116.4453366128424
+    ],
+    "train_std": [
+      10.709341716464541,
+      12.440257232066939,
+      15.183245431663538,
+      361.7043393730035,
+      0.6636126928770958,
+      102.34686122025643
+    ],
+    "threshold": 0.09070630687671422,
+    "threshold_rule": "99th percentile of the level4 test score (1 % false-reject on in-support data)",
+    "bank": "tools/layout_novelty.py computes the 6-vector for all 10 800 training samples; the C++ library ships it as data (S4.3)"
+  }
 }
