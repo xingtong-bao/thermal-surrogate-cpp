@@ -4,53 +4,140 @@
   "title": "thermal-surrogate interface schema",
   "description": "Machine-readable form of contract/contract.md. Validators use $defs/input and $defs/output; the C++ library reads the top-level tensor and channels tables.",
   "schema_version": "1.0.0",
-
   "tensor": {
-    "shape": [64, 64, 1, 7],
-    "axes": ["X", "Y", "Z", "P"],
+    "shape": [
+      64,
+      64,
+      1,
+      7
+    ],
+    "axes": [
+      "X",
+      "Y",
+      "Z",
+      "P"
+    ],
     "dtype": "float32",
-    "layout": "C-contiguous, P varies fastest"
+    "layout": "C-contiguous, P varies fastest",
+    "description": "Single-sample tensor layout. Axes X,Y are the 64x64 grid, Z is depth (1 layer in this dataset), P is the number of physical channels. The C++ validator reads this table; see contract.md section 2."
   },
-
+  "channels_description": "Physical quantity stored in each P slice, in index order. train_min/train_max are the per-channel [min,max] of the S4 training split and are written by tools/data_loader.py (S2.3); they stay null until then. Unit strings marked 'TBD S2.3' are inferred from the data in that story.",
   "channels": [
-    { "index": 0, "name": "chiplet_power",    "unit": "W per cell (TBD S2.3)",          "train_min": null, "train_max": null },
-    { "index": 1, "name": "grid_x",           "unit": "normalized coordinate (TBD S2.3)", "train_min": null, "train_max": null },
-    { "index": 2, "name": "grid_y",           "unit": "normalized coordinate (TBD S2.3)", "train_min": null, "train_max": null },
-    { "index": 3, "name": "local_thermal_k",  "unit": "W/(m*K)",                         "train_min": null, "train_max": null },
-    { "index": 4, "name": "ambient_K",        "unit": "K",                               "train_min": null, "train_max": null },
-    { "index": 5, "name": "h_w_m2k",          "unit": "W/(m^2*K)",                       "train_min": null, "train_max": null },
-    { "index": 6, "name": "r_convec_k_per_w", "unit": "K/W",                             "train_min": null, "train_max": null }
-  ],
-
-  "oob_scale": null,
-
-  "$defs": {
-    "finite_number": { "type": "number" },
-
-    "channel_name": {
-      "enum": ["chiplet_power", "grid_x", "grid_y", "local_thermal_k", "ambient_K", "h_w_m2k", "r_convec_k_per_w"]
+    {
+      "index": 0,
+      "name": "chiplet_power",
+      "unit": "W per cell (TBD S2.3)",
+      "train_min": null,
+      "train_max": null
     },
-
+    {
+      "index": 1,
+      "name": "grid_x",
+      "unit": "normalized coordinate (TBD S2.3)",
+      "train_min": null,
+      "train_max": null
+    },
+    {
+      "index": 2,
+      "name": "grid_y",
+      "unit": "normalized coordinate (TBD S2.3)",
+      "train_min": null,
+      "train_max": null
+    },
+    {
+      "index": 3,
+      "name": "local_thermal_k",
+      "unit": "W/(m*K)",
+      "train_min": null,
+      "train_max": null
+    },
+    {
+      "index": 4,
+      "name": "ambient_K",
+      "unit": "K",
+      "train_min": null,
+      "train_max": null
+    },
+    {
+      "index": 5,
+      "name": "h_w_m2k",
+      "unit": "W/(m^2*K)",
+      "train_min": null,
+      "train_max": null
+    },
+    {
+      "index": 6,
+      "name": "r_convec_k_per_w",
+      "unit": "K/W",
+      "train_min": null,
+      "train_max": null
+    }
+  ],
+  "oob_scale_description": "Out-of-distribution margin as a fraction of (train_max - train_min) per channel; a value outside [train_min - margin, train_max + margin] triggers fallback (contract rule I4/F1). Derived from the extrapolation curve in S2b.3, never chosen by hand.",
+  "oob_scale": null,
+  "$defs": {
+    "finite_number": {
+      "type": "number"
+    },
+    "channel_name": {
+      "enum": [
+        "chiplet_power",
+        "grid_x",
+        "grid_y",
+        "local_thermal_k",
+        "ambient_K",
+        "h_w_m2k",
+        "r_convec_k_per_w"
+      ],
+      "description": "Closed set of channel names; referenced for tooling, the order itself is enforced by $defs/input."
+    },
     "input": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["shape", "dtype", "channels"],
+      "required": [
+        "shape",
+        "dtype",
+        "channels"
+      ],
       "properties": {
-        "shape": { "const": [64, 64, 1, 7] },
-        "dtype": { "const": "float32" },
+        "shape": {
+          "const": [
+            64,
+            64,
+            1,
+            7
+          ]
+        },
+        "dtype": {
+          "const": "float32"
+        },
         "channels": {
           "type": "array",
           "minItems": 7,
           "maxItems": 7,
           "items": false,
           "prefixItems": [
-            { "const": "chiplet_power" },
-            { "const": "grid_x" },
-            { "const": "grid_y" },
-            { "const": "local_thermal_k" },
-            { "const": "ambient_K" },
-            { "const": "h_w_m2k" },
-            { "const": "r_convec_k_per_w" }
+            {
+              "const": "chiplet_power"
+            },
+            {
+              "const": "grid_x"
+            },
+            {
+              "const": "grid_y"
+            },
+            {
+              "const": "local_thermal_k"
+            },
+            {
+              "const": "ambient_K"
+            },
+            {
+              "const": "h_w_m2k"
+            },
+            {
+              "const": "r_convec_k_per_w"
+            }
           ]
         },
         "data": {
@@ -58,29 +145,56 @@
           "type": "array",
           "minItems": 28672,
           "maxItems": 28672,
-          "items": { "$ref": "#/$defs/finite_number" }
+          "items": {
+            "$ref": "#/$defs/finite_number"
+          }
         },
-        "sample_id": { "type": "string" }
-      }
+        "sample_id": {
+          "type": "string"
+        }
+      },
+      "description": "A request header. 'channels' must list the seven names in the fixed order (prefixItems); 'data' is optional and, when present, is the flattened sample in the declared layout."
     },
-
     "status": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["code", "message"],
+      "required": [
+        "code",
+        "message"
+      ],
       "properties": {
         "code": {
-          "enum": ["Ok", "InvalidInput", "ShapeMismatch", "ChannelMismatch", "OutOfDistribution",
-                   "ModelNotLoaded", "InferenceFailed", "ReferenceFailed", "Timeout"]
+          "enum": [
+            "Ok",
+            "InvalidInput",
+            "ShapeMismatch",
+            "ChannelMismatch",
+            "OutOfDistribution",
+            "ModelNotLoaded",
+            "InferenceFailed",
+            "ReferenceFailed",
+            "Timeout"
+          ]
         },
-        "message": { "type": "string" }
-      }
+        "message": {
+          "type": "string"
+        }
+      },
+      "description": "Error reporting across the library boundary. No exceptions cross it; every call returns one of these codes (contract.md section 6)."
     },
-
     "output": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["tmax", "tmax_index", "oob_flag", "oob_channels", "source", "latency_ms", "model_version", "status"],
+      "required": [
+        "tmax",
+        "tmax_index",
+        "oob_flag",
+        "oob_channels",
+        "source",
+        "latency_ms",
+        "model_version",
+        "status"
+      ],
       "properties": {
         "field": {
           "description": "Optional 64x64 temperature field in K, row-major [X][Y].",
@@ -91,41 +205,105 @@
             "type": "array",
             "minItems": 64,
             "maxItems": 64,
-            "items": { "$ref": "#/$defs/finite_number" }
+            "items": {
+              "$ref": "#/$defs/finite_number"
+            }
           }
         },
-        "tmax": { "$ref": "#/$defs/finite_number" },
+        "tmax": {
+          "$ref": "#/$defs/finite_number"
+        },
         "tmax_index": {
           "type": "array",
           "minItems": 2,
           "maxItems": 2,
-          "items": { "type": "integer", "minimum": 0, "maximum": 63 }
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 63
+          }
         },
-        "oob_flag": { "type": "boolean" },
+        "oob_flag": {
+          "type": "boolean"
+        },
         "oob_channels": {
           "type": "array",
           "uniqueItems": true,
-          "items": { "type": "integer", "minimum": 0, "maximum": 6 }
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6
+          }
         },
-        "source": { "enum": ["surrogate", "reference_inprocess", "reference_external"] },
-        "latency_ms": { "type": "number", "minimum": 0 },
-        "model_version": { "type": "string" },
-        "status": { "$ref": "#/$defs/status" }
+        "source": {
+          "enum": [
+            "surrogate",
+            "reference_inprocess",
+            "reference_external"
+          ]
+        },
+        "latency_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "model_version": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        }
       },
       "allOf": [
         {
-          "if": { "properties": { "oob_flag": { "const": false } } },
-          "then": { "properties": { "oob_channels": { "maxItems": 0 } } }
+          "if": {
+            "properties": {
+              "oob_flag": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "oob_channels": {
+                "maxItems": 0
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "oob_flag": { "const": true } } },
-          "then": { "properties": { "oob_channels": { "minItems": 1 } } }
+          "if": {
+            "properties": {
+              "oob_flag": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "oob_channels": {
+                "minItems": 1
+              }
+            }
+          }
         },
         {
-          "if": { "properties": { "source": { "const": "surrogate" } } },
-          "then": { "properties": { "model_version": { "minLength": 1 } } }
+          "if": {
+            "properties": {
+              "source": {
+                "const": "surrogate"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "model_version": {
+                "minLength": 1
+              }
+            }
+          }
         }
-      ]
+      ],
+      "description": "A response. 'field' is optional because callers may ask for tmax only; the allOf block encodes the cross-field rules of contract.md section 3."
     }
   }
 }
