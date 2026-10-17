@@ -1,0 +1,6 @@
+{
+  "sample_id": "s4-test-0000",
+  "shape": [64, 64, 1, 7],
+  "dtype": "float32",
+  "channels": ["chiplet_power", "grid_x", "grid_y", "local_thermal_k", "ambient_K", "h_w_m2k", "r_convec_k_per_w"]
+}

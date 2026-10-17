@@ -1,0 +1,10 @@
+{
+  "tmax": 341.25,
+  "tmax_index": [17, 42],
+  "oob_flag": false,
+  "oob_channels": [],
+  "source": "surrogate",
+  "latency_ms": 3.8,
+  "model_version": "unet-level4-v1",
+  "status": { "code": "Ok", "message": "" }
+}
