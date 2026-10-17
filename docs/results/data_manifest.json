@@ -1,0 +1,35 @@
+{
+  "source": "IC-ThermBench (Day333/ThermalBench), data CC BY 4.0, code MIT",
+  "fetched_at": "2026-10-18T05:20:56+0800",
+  "files": {
+    "level4_steady/input.mat": {
+      "bytes": 1720322048,
+      "sha256": "a90cdae1844ef0dbeb8b85c6cc6c7ac4ba4391a886b09be4e970b1c76f1c9fcd"
+    },
+    "level4_steady/output.mat": {
+      "bytes": 245762048,
+      "sha256": "366973e4c7bb6beb8c474874035dc3fad788e688e720f26c86c022bc186577e8"
+    },
+    "level5_steady/input.mat": {
+      "bytes": 573442048,
+      "sha256": "3672d29eaf627f8ead5db926e7912c508208a2e0c51d97de198ea096b90d0216"
+    },
+    "level5_steady/manifest.json": {
+      "bytes": 169450,
+      "sha256": "aa96efd11100e37e0cd913ef5d4d769baa85964988cd348f3dfe04a2fc28b1c4"
+    },
+    "level5_steady/output.mat": {
+      "bytes": 81922048,
+      "sha256": "a4d00a6a9132a560a3df1b1705cadd54310c446c82e9ee189d7a47e815ac3229"
+    },
+    "level4_UNet/model.pt": {
+      "bytes": 20270711,
+      "sha256": "1207ecfef9b25e21d69e242e89b5ae2175abbc262ace9c33fd1beb561f460b27"
+    },
+    "level4_UNet/test_metrics.json": {
+      "bytes": 545,
+      "sha256": "077ae02a8cdfb4fd09d7fecefa395656cbb90589c8b3a2d2d64631305cd2da86"
+    }
+  },
+  "note": "Fetched with tools/fetch_assets.py using HTTP Range requests against the public Google Drive archives: datasets.zip (502 MB, 17 members) -> 28 requests / 201 MB fetched; checkpoints.zip (46.3 GB, 455 members) -> 7 requests / 19 MB fetched. Only level4_steady/, level5_steady/ and level4_UNet/ were extracted. level4: input (15000,7,1,64,64) float32, output (15000,1,64,64); level5: 5000 samples, same schema."
+}

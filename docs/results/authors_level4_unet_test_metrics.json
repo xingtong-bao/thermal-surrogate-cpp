@@ -1,0 +1,17 @@
+{
+  "unet/rmse": 2.5508318800597536,
+  "unet/r2": 0.9901791899559894,
+  "unet/r2_per_sample": 0.8790403564996162,
+  "unet/max_absolute_error": 11.16458467610677,
+  "unet/mean_absolute_error": 1.8290674095824362,
+  "unet/mape_percent": 0.5086043440799154,
+  "unet/pape_percent": 3.122944270075442,
+  "unet/max_temperature_error": 1.1850498453776042,
+  "unet/topk50_temperature_difference": 1.4636443314615875,
+  "train_time_s": 1687.2,
+  "train_time_per_epoch_s": 8.44,
+  "epochs": 200,
+  "params": 5062125,
+  "n_train": 10800,
+  "n_test": 3000
+}
