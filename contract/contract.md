@@ -3,7 +3,7 @@
 This document is the single source of truth for what the C++ library accepts, what it
 returns, when it is allowed to answer from the surrogate, and when it must fall back to a
 reference solver. Every rule is written as an assertion that the code checks. Placeholders
-marked `TBD(S2.2)` / `TBD(S2.3)` are filled from measured data, never by hand.
+marked `TBD(...)` are filled from measured data, never by hand.
 
 ## 1. Use case and non-goals
 
@@ -22,18 +22,35 @@ in that index order (P varies fastest). Channel order is fixed:
 
 | idx | channel            | unit                     | training range        |
 |----:|--------------------|--------------------------|-----------------------|
-| 0   | `chiplet_power`    | W per cell `TBD(S2.3)`    | `TBD(S2.3)`           |
-| 1   | `grid_x`           | normalized coordinate `TBD(S2.3)` | `TBD(S2.3)`  |
-| 2   | `grid_y`           | normalized coordinate `TBD(S2.3)` | `TBD(S2.3)`  |
-| 3   | `local_thermal_k`  | W·m⁻¹·K⁻¹                | `TBD(S2.3)`           |
-| 4   | `ambient_K`        | K                        | `TBD(S2.3)`           |
-| 5   | `h_w_m2k`          | W·m⁻²·K⁻¹                | `TBD(S2.3)`           |
-| 6   | `r_convec_k_per_w` | K·W⁻¹                    | `TBD(S2.3)`           |
+| 0   | `chiplet_power`    | W, total power of the chiplet covering the cell, 0 outside chiplets (inferred) | `[0, 300]` |
+| 1   | `grid_x`           | mm, physical cell coordinate, uniform spacing per sample (inferred) | `[0, 59]` |
+| 2   | `grid_y`           | mm, physical cell coordinate, uniform spacing per sample (inferred) | `[0, 61]` |
+| 3   | `local_thermal_k`  | W·m⁻¹·K⁻¹                | `[0.200029, 100]` |
+| 4   | `ambient_K`        | K                        | `[298.151, 328.141]` |
+| 5   | `h_w_m2k`          | W·m⁻²·K⁻¹                | `[500.042, 19991.8]` |
+| 6   | `r_convec_k_per_w` | K·W⁻¹                    | `[0.00087, 0.208077]` |
 
-Units for channels 0–2 are inferred from the data in S2.3 (value ranges and the upstream
-ATPlace2.5D conventions) and confirmed there. Training ranges are the per-channel
-`[min, max]` of the S4 training split, stored in `contract/stats.json` together with
-mean, std, p1 and p99.
+Training ranges are the per-channel `[min, max]` of the S4 training split (10 800
+samples), measured in S2.3 by `tools/export_stats.py` and stored in `contract/stats.json`
+together with mean, std, p1 and p99. The per-channel mean/std recomputed from that split
+agree with the normalizer pickled inside the authors' checkpoint to a relative 1.4e-5,
+which is the evidence that this split is the one the model was trained on. The
+normalization constants the ONNX/C++ path must use are the checkpoint's, copied into
+`stats.json` under `checkpoint_normalizer`.
+
+Facts about the channels that an implementer needs (all measured, see `stats.json`):
+
+- Channels 0–2 carry no unit in the benchmark; the units above are inferred from the
+  values. `chiplet_power` takes one value per chiplet (14 distinct values in training,
+  0 outside chiplet footprints), so summing it over cells does **not** give chip power.
+  `grid_x`/`grid_y` increase in uniform steps of a fraction of a millimetre whose size
+  changes per sample (chip size varies by case).
+- `grid_x` varies along the loader's axis `Y` (index 2) and `grid_y` along axis `X`
+  (index 1): the MATLAB source is column-major and the names follow its convention. The
+  axis names are labels of a fixed memory layout, not geometry.
+- Channels 4–6 are constant within a sample (global boundary conditions encoded as maps).
+- Output `temperature_K`: training range `[299.46, 506.27]` K,
+  mean 356.30, std 29.17.
 
 Assertions checked before inference (any failure is a hard reject, see §5):
 

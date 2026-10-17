@@ -21,56 +21,56 @@
     "layout": "C-contiguous, P varies fastest",
     "description": "Single-sample tensor layout. Axes X,Y are the 64x64 grid, Z is depth (1 layer in this dataset), P is the number of physical channels. The C++ validator reads this table; see contract.md section 2."
   },
-  "channels_description": "Physical quantity stored in each P slice, in index order. train_min/train_max are the per-channel [min,max] of the S4 training split and are written by tools/data_loader.py (S2.3); they stay null until then. Unit strings marked 'TBD S2.3' are inferred from the data in that story.",
+  "channels_description": "Physical quantity stored in each P slice, in index order. train_min/train_max are the per-channel [min,max] of the S4 training split (10800 samples), written in S2.3 by tools/export_stats.py and identical to contract/stats.json (tools/check_schema.py enforces this). Units of channels 0-2 are inferred from the data; the others are named with their unit by the benchmark.",
   "channels": [
     {
       "index": 0,
       "name": "chiplet_power",
-      "unit": "W per cell (TBD S2.3)",
-      "train_min": null,
-      "train_max": null
+      "unit": "W, total power of the chiplet covering the cell (0 outside chiplets); inferred",
+      "train_min": 0.0,
+      "train_max": 300.0
     },
     {
       "index": 1,
       "name": "grid_x",
-      "unit": "normalized coordinate (TBD S2.3)",
-      "train_min": null,
-      "train_max": null
+      "unit": "mm, physical coordinate of the cell (0 at chip edge, uniform spacing per sample); inferred",
+      "train_min": 0.0,
+      "train_max": 59.0
     },
     {
       "index": 2,
       "name": "grid_y",
-      "unit": "normalized coordinate (TBD S2.3)",
-      "train_min": null,
-      "train_max": null
+      "unit": "mm, physical coordinate of the cell (0 at chip edge, uniform spacing per sample); inferred",
+      "train_min": 0.0,
+      "train_max": 61.0
     },
     {
       "index": 3,
       "name": "local_thermal_k",
       "unit": "W/(m*K)",
-      "train_min": null,
-      "train_max": null
+      "train_min": 0.20002900063991547,
+      "train_max": 100.0
     },
     {
       "index": 4,
       "name": "ambient_K",
       "unit": "K",
-      "train_min": null,
-      "train_max": null
+      "train_min": 298.1506042480469,
+      "train_max": 328.1414489746094
     },
     {
       "index": 5,
       "name": "h_w_m2k",
       "unit": "W/(m^2*K)",
-      "train_min": null,
-      "train_max": null
+      "train_min": 500.0423583984375,
+      "train_max": 19991.787109375
     },
     {
       "index": 6,
       "name": "r_convec_k_per_w",
       "unit": "K/W",
-      "train_min": null,
-      "train_max": null
+      "train_min": 0.0008699999889358878,
+      "train_max": 0.20807699859142303
     }
   ],
   "oob_scale_description": "Out-of-distribution margin as a fraction of (train_max - train_min) per channel; a value outside [train_min - margin, train_max + margin] triggers fallback (contract rule I4/F1). Derived from the extrapolation curve in S2b.3, never chosen by hand.",
