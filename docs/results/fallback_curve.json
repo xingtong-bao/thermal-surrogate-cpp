@@ -1,0 +1,102 @@
+{
+  "settings": {
+    "streams": "level4 test (3000), level5 (5000), mixed = 50/50",
+    "reference_assumed_exact": true,
+    "cost_ratios": [
+      100,
+      1000
+    ]
+  },
+  "operating_points": {
+    "gate_field_mae_K": 2.012188324971994,
+    "oob_scale": 0.0,
+    "novelty_threshold": 0.09070630687671422,
+    "I4_only_at_contract": {
+      "level4": {
+        "fallback_rate": 0.0003333333333332966,
+        "blended_mae_K": 1.8289554333333333,
+        "accepted_mae_K": 1.8295652884294764,
+        "accepted_passes_gate": true,
+        "cost_R100": 1.0329999999999964,
+        "cost_R1000": 1.3329999999999633
+      },
+      "level5": {
+        "fallback_rate": 0.20020000000000004,
+        "blended_mae_K": 11.26905014,
+        "accepted_mae_K": 14.089835133783447,
+        "accepted_passes_gate": false,
+        "cost_R100": 20.819800000000004,
+        "cost_R1000": 200.99980000000005
+      },
+      "mixed": {
+        "fallback_rate": 0.10026666666666667,
+        "blended_mae_K": 6.549002786666666,
+        "accepted_mae_K": 7.278826452282159,
+        "cost_R100": 10.926400000000001,
+        "cost_R1000": 101.16640000000001,
+        "accepted_passes_gate": false
+      }
+    },
+    "I5_only_at_contract": {
+      "level4": {
+        "fallback_rate": 0.010000000000000009,
+        "blended_mae_K": 1.8048556666666666,
+        "accepted_mae_K": 1.8230865319865317,
+        "accepted_passes_gate": true,
+        "cost_R100": 1.9900000000000009,
+        "cost_R1000": 10.990000000000009
+      },
+      "level5": {
+        "fallback_rate": 1.0,
+        "blended_mae_K": 0.0,
+        "accepted_mae_K": NaN,
+        "accepted_passes_gate": false,
+        "cost_R100": 100.0,
+        "cost_R1000": 1000.0
+      },
+      "mixed": {
+        "fallback_rate": 0.505,
+        "blended_mae_K": 0.9024278333333333,
+        "accepted_mae_K": 1.8230865319865317,
+        "cost_R100": 50.995,
+        "cost_R1000": 505.495,
+        "accepted_passes_gate": true
+      }
+    },
+    "I4+I5_at_contract": {
+      "level4": {
+        "fallback_rate": 0.010333333333333306,
+        "blended_mae_K": 1.8045485333333333,
+        "accepted_mae_K": 1.823390232401482,
+        "accepted_passes_gate": true,
+        "cost_R100": 2.022999999999997,
+        "cost_R1000": 11.322999999999972
+      },
+      "level5": {
+        "fallback_rate": 1.0,
+        "blended_mae_K": 0.0,
+        "accepted_mae_K": NaN,
+        "accepted_passes_gate": false,
+        "cost_R100": 100.0,
+        "cost_R1000": 1000.0
+      },
+      "mixed": {
+        "fallback_rate": 0.5051666666666667,
+        "blended_mae_K": 0.9022742666666667,
+        "accepted_mae_K": 1.823390232401482,
+        "cost_R100": 51.0115,
+        "cost_R1000": 505.6615,
+        "accepted_passes_gate": true
+      }
+    },
+    "I4_best_possible": {
+      "threshold": 0.0,
+      "fallback_rate": 0.10026666666666667,
+      "blended_mae_K": 6.549002786666666,
+      "accepted_mae_K": 7.278826452282159,
+      "cost_R100": 10.926400000000001,
+      "cost_R1000": 101.16640000000001,
+      "accepted_passes_gate": false
+    }
+  }
+}
