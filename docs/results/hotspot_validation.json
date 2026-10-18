@@ -1,0 +1,19 @@
+{
+  "backend": "external (HotSpot grid model via tools/reference_cli.py)",
+  "hotspot": "uvahotspot/HotSpot master, built from source on macOS",
+  "config": "ambient and r_convec from the channels; sink side 0.168 m (from h = 1/(r*0.0282 m^2) in the data); spreader 1.2x chip; per-block resistivity from local_thermal_k; other parameters HotSpot defaults",
+  "set": "tests/fixtures/eval50 level4, first 20",
+  "timeout_s": 120,
+  "n": 20,
+  "n_ok": 20,
+  "mae_K": 13.9763875,
+  "mae_p95_K": 24.9589,
+  "tmax_abs_err_mean_K": 19.61749988,
+  "max_abs_err_K": 41.56,
+  "latency_median_ms": 2643.3199999999997,
+  "sources": {
+    "reference_external": 20
+  },
+  "fallback_rate": null,
+  "verdict": "HotSpot reproduces the generator's tool but not its hidden package configuration: on level4 chips it under-predicts the hotspot by ~18 K; on the level5 chips it is within 3.4 K (see backend_comparison.csv). The timeout path is covered by tests/test_external_backend.cpp."
+}
