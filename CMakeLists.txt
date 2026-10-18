@@ -32,7 +32,8 @@ add_library(thermal_surrogate STATIC
   src/model_info.cpp
   src/npy.cpp
   src/predictor.cpp
-  src/validator.cpp)
+  src/validator.cpp
+  src/dispatcher.cpp)
 target_include_directories(thermal_surrogate PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 # ORT is a private implementation detail: callers of the library include only
@@ -64,7 +65,7 @@ set_target_properties(ts_demo PROPERTIES BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}")
 if(TS_BUILD_TESTS)
   include(cmake/googletest.cmake)
   enable_testing()
-  add_executable(ts_tests tests/test_skeleton.cpp tests/test_predictor.cpp tests/test_validator.cpp)
+  add_executable(ts_tests tests/test_skeleton.cpp tests/test_predictor.cpp tests/test_validator.cpp tests/test_dispatcher.cpp)
   target_link_libraries(ts_tests PRIVATE thermal_surrogate onnxruntime::onnxruntime nlohmann_json::nlohmann_json GTest::gtest_main)
   target_compile_definitions(ts_tests PRIVATE
     TS_MODEL_PATH="${TS_MODEL_PATH}"
