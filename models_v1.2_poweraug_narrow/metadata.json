@@ -1,0 +1,247 @@
+{
+  "model_version": "level4-unet-poweraug-1.4.0",
+  "schema_version": "1.0.0",
+  "source": {
+    "benchmark": "IC-ThermBench (CC BY 4.0)",
+    "checkpoint": "external/thermbench_data/level4_UNet_poweraug_narrow/model.pt (tools/finetune_power_aug.py)",
+    "checkpoint_sha256": "60b2c4b9bc7907217bab16e5adedaf78d80b5ab124dab5fe1a3f69e3a525333d",
+    "training_data": "level4_steady (S4), split per contract/stats.json",
+    "architecture": "UNet in=7 out=1 channels (58,116,232,348), 5,062,125 parameters",
+    "augmentation": {
+      "n_train": 10800,
+      "epochs": 12,
+      "lr": 0.0001,
+      "f_range": [
+        0.85,
+        1.15
+      ],
+      "hotspot_weight": 0.0,
+      "hotspot_topk": 64,
+      "freeze": "",
+      "eval_every": 2,
+      "selected_epoch": 12,
+      "curve": [
+        {
+          "epoch": 2,
+          "eval50_mae_K": 1.2841655541956425,
+          "eval50_mae_p95_K": 1.8264637887477875,
+          "eval50_tmax_median_K": 0.8449859619140625,
+          "passes": {
+            "field_mae": true,
+            "worst5pct": true,
+            "tmax_median": true
+          },
+          "passes_all": true,
+          "power_gain": {
+            "x0.9": 0.4295307302588318,
+            "x1.1": 0.38030608842688046
+          }
+        },
+        {
+          "epoch": 4,
+          "eval50_mae_K": 1.3042954243719578,
+          "eval50_mae_p95_K": 1.9423257559537888,
+          "eval50_tmax_median_K": 0.903656005859375,
+          "passes": {
+            "field_mae": true,
+            "worst5pct": true,
+            "tmax_median": true
+          },
+          "passes_all": true,
+          "power_gain": {
+            "x0.9": 0.672946142521841,
+            "x1.1": 0.6070845619395715
+          }
+        },
+        {
+          "epoch": 6,
+          "eval50_mae_K": 1.4526915249228478,
+          "eval50_mae_p95_K": 1.8294063583016396,
+          "eval50_tmax_median_K": 0.8842620849609375,
+          "passes": {
+            "field_mae": true,
+            "worst5pct": true,
+            "tmax_median": true
+          },
+          "passes_all": true,
+          "power_gain": {
+            "x0.9": 0.7568088868668306,
+            "x1.1": 0.7449203824568413
+          }
+        },
+        {
+          "epoch": 8,
+          "eval50_mae_K": 1.3448661434650422,
+          "eval50_mae_p95_K": 1.7877342775464058,
+          "eval50_tmax_median_K": 0.712066650390625,
+          "passes": {
+            "field_mae": true,
+            "worst5pct": true,
+            "tmax_median": true
+          },
+          "passes_all": true,
+          "power_gain": {
+            "x0.9": 0.8394656507419328,
+            "x1.1": 0.7996979981636815
+          }
+        },
+        {
+          "epoch": 10,
+          "eval50_mae_K": 1.4053801445662975,
+          "eval50_mae_p95_K": 1.9659067019820213,
+          "eval50_tmax_median_K": 1.3662567138671875,
+          "passes": {
+            "field_mae": true,
+            "worst5pct": true,
+            "tmax_median": false
+          },
+          "passes_all": false,
+          "power_gain": {
+            "x0.9": 0.8740815534846834,
+            "x1.1": 0.8372924267603645
+          }
+        },
+        {
+          "epoch": 12,
+          "eval50_mae_K": 1.414545641541481,
+          "eval50_mae_p95_K": 1.8603166863322258,
+          "eval50_tmax_median_K": 0.7250213623046875,
+          "passes": {
+            "field_mae": true,
+            "worst5pct": true,
+            "tmax_median": true
+          },
+          "passes_all": true,
+          "power_gain": {
+            "x0.9": 0.8646085051615576,
+            "x1.1": 0.8259747377856472
+          }
+        }
+      ],
+      "device": "mps",
+      "finetune_time_s": 5947.097288131714,
+      "before": {
+        "eval50_mae_K": 1.0509601086378098,
+        "eval50_mae_p95_K": 1.655869297683239,
+        "eval50_tmax_median_K": 0.6084747314453125,
+        "passes": {
+          "field_mae": true,
+          "worst5pct": true,
+          "tmax_median": true
+        },
+        "passes_all": true,
+        "power_gain": {
+          "x0.9": 0.12305026841919088,
+          "x1.1": 0.08684180409892635
+        }
+      },
+      "after": {
+        "eval50_mae_K": 1.414545641541481,
+        "eval50_mae_p95_K": 1.8603166863322258,
+        "eval50_tmax_median_K": 0.7250213623046875,
+        "passes": {
+          "field_mae": true,
+          "worst5pct": true,
+          "tmax_median": true
+        },
+        "passes_all": true,
+        "power_gain": {
+          "x0.9": 0.8646085051615576,
+          "x1.1": 0.8259747377856472
+        }
+      }
+    }
+  },
+  "export": {
+    "tool": "tools/export_onnx.py",
+    "torch": "2.0.1",
+    "onnx": "1.23.2",
+    "onnxruntime": "1.23.2",
+    "opset": 17,
+    "date": "2026-10-18"
+  },
+  "io": {
+    "input": {
+      "name": "input",
+      "shape": [
+        1,
+        64,
+        64,
+        1,
+        7
+      ],
+      "axes": [
+        "B",
+        "X",
+        "Y",
+        "Z",
+        "P"
+      ],
+      "dtype": "float32",
+      "layout": "C-contiguous, physical units as in contract section 2"
+    },
+    "output": {
+      "name": "field",
+      "shape": [
+        1,
+        64,
+        64,
+        1
+      ],
+      "axes": [
+        "B",
+        "X",
+        "Y",
+        "Z"
+      ],
+      "dtype": "float32",
+      "unit": "K"
+    }
+  },
+  "normalization": {
+    "baked_into_graph": true,
+    "note": "The graph normalizes its input and de-normalizes its output; the client passes physical values. Constants are listed for inspection and must equal contract/stats.json checkpoint_normalizer.",
+    "channels": [
+      "chiplet_power",
+      "grid_x",
+      "grid_y",
+      "local_thermal_k",
+      "ambient_K",
+      "h_w_m2k",
+      "r_convec_k_per_w"
+    ],
+    "x_mean": [
+      45.003807067871094,
+      22.049999237060547,
+      21.899999618530273,
+      49.80644226074219,
+      313.2140197753906,
+      5318.1201171875,
+      0.02211057022213936
+    ],
+    "x_std": [
+      85.82110595703125,
+      14.343846321105957,
+      14.728928565979004,
+      49.249725341796875,
+      8.662182807922363,
+      5113.349609375,
+      0.02954956702888012
+    ],
+    "y_mean": 356.2989501953125,
+    "y_std": 29.173845291137695
+  },
+  "files": {
+    "model.onnx": {
+      "size_bytes": 20257836,
+      "sha256": "e6a847f3a0d991dc6617296990600074aee5cb829c25d663f6f89ec04d962650",
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "dynamic_axes": false,
+      "layout": "contract (B,X,Y,Z,P)",
+      "ir_version": 8,
+      "opset": 17,
+      "node_count": 49
+    }
+  },
+  "dynamic_constraints": "model_dynamic.onnx: X and Y must be multiples of 8 (three 2x max-pools); Z must be 1; P must be 7. model_nchw_dynamic.onnx: batch dynamic only, input (B,7,64,64), output (B,1,64,64); S4.5 layout study, not a contract artefact"
+}

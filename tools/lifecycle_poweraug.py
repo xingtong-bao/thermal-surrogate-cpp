@@ -6,7 +6,8 @@ Same gates as every other version, plus the one this candidate exists for:
   2. parity        ONNX Runtime vs PyTorch on the 50-sample eval subset
   3. artefacts     bank (unchanged: same chips), stats (unchanged ranges), FD params; conformal
                    recalibrated on the validation split with the new model
-  4. C++ gates     ts_demo --compare on eval50 (seen chips): the three contract gates
+  4. C++ gates     ts_demo --compare on eval50 (seen chips): the three contract gates (smoke gate)
+  4b. full split   the same three gates on all 3 000 test samples in PyTorch (release gate)
   5. unseen check  ts_demo --compare on the 50 level5 samples: must not get worse
   6. power gain    tools/power_gain_verification.py with the new model (HotSpot truth)
 Writes docs/results/power_aug_lifecycle.json.
@@ -99,16 +100,33 @@ def main():
     print(f"[seen] MAE {seen['surrogate_mae_K']:.3f} p95 {seen['surrogate_mae_p95_K']:.3f} Tmax med {seen['tmax_abs_err_median_K']:.3f} -> {seen['passes']}")
     print(f"[unseen] surrogate MAE {unseen['surrogate_mae_K']:.2f} K, fallback {unseen['fallback_rate']:.0%}")
 
+    # Full test split (3 000 samples) in PyTorch: the contract gates were derived from
+    # it, and S8.5 showed the committed 50-sample subset under-samples the hot cases
+    # (a candidate passed the subset and failed here). This is the release check.
+    from run import parse_args
+    from data_provider.data_factory import data_provider
+    from exp.exp_operator import _predict
+    sys.argv = ["run.py", "--model", "UNet", "--data", "level4", "--task", "test", "--quiet"]
+    _, _, _, _, xte, yte = data_provider(parse_args())
+    truth = yte.numpy().astype(np.float64).reshape(xte.shape[0], -1)
+    pred = _predict(model, x_norm, y_norm, xte.contiguous(), "UNet", "cpu").numpy().astype(np.float64).reshape(xte.shape[0], -1)
+    per = np.abs(pred - truth).mean(axis=1); tm = np.abs(pred.max(axis=1) - truth.max(axis=1))
+    full = {"n": int(xte.shape[0]), "mae_K": float(per.mean()), "mae_p95_K": float(np.sort(per)[int(0.95 * len(per)) - 1]), "tmax_median_K": float(np.median(tm))}
+    full["passes"] = {"field_mae": full["mae_K"] < gates["field_mae_K"], "worst5pct": full["mae_p95_K"] < gates["worst5pct_per_sample_mae_K"], "tmax_median": full["tmax_median_K"] < gates["tmax_abs_err_median_K"]}
+    full["passes_all"] = all(full["passes"].values())
+    print(f"[full split] MAE {full['mae_K']:.3f} p95 {full['mae_p95_K']:.3f} Tmax med {full['tmax_median_K']:.3f} -> {full['passes']}")
+
     subprocess.run([PY, os.path.join(HERE, "power_gain_verification.py"), "--n", "10", "--model", os.path.join(out, "model.onnx"),
                     "--out", os.path.join(res, f"power_gain_verification_{a.tag}.json")], check=True, capture_output=True)
     gain = json.load(open(os.path.join(res, f"power_gain_verification_{a.tag}.json")))["summary"]
     print(f"[hotspot gain] level4 median {gain['level4']['gain_median']:.2f}, level5 median {gain['level5']['gain_median']:.2f}")
 
     json.dump({"version": version, "finetune": ftm, "parity_max_abs_diff_K": worst, "conformal_overall": conf["overall"], "gates": gates,
-               "seen_eval50_cpp": seen, "unseen_level5_cpp": unseen, "hotspot_gain_v1.2": gain,
+               "seen_eval50_cpp": seen, "seen_full_test_split": full, "release_verdict": "release candidate" if (seen["passes_all"] and full["passes_all"]) else "blocked by the gates",
+               "unseen_level5_cpp": unseen, "hotspot_gain_v1.2": gain,
                "hotspot_gain_v1.0": json.load(open(os.path.join(res, "power_gain_verification.json")))["summary"]},
               open(os.path.join(res, f"power_aug_lifecycle_{a.tag}.json"), "w"), indent=2)
-    print("-> docs/results/power_aug_lifecycle.json")
+    print(f"-> docs/results/power_aug_lifecycle_{a.tag}.json")
 
 
 if __name__ == "__main__":

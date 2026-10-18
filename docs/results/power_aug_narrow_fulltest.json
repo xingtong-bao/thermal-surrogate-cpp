@@ -1,0 +1,33 @@
+{
+  "set": "level4 full test split (3000)",
+  "gates": {
+    "field_mae_K": 2.012188324971994,
+    "worst5pct_per_sample_mae_K": 3.7921820611879227,
+    "tmax_abs_err_median_K": 0.9517745971679689,
+    "factor": 1.1
+  },
+  "models": {
+    "v1.0": {
+      "mae_K": 1.8292621136109035,
+      "mae_p95_K": 3.447339154779911,
+      "tmax_median_K": 0.8652496337890625,
+      "rmse_K": 2.8975020099059847,
+      "passes": {
+        "field_mae": true,
+        "worst5pct": true,
+        "tmax_median": true
+      }
+    },
+    "v1.4_narrow": {
+      "mae_K": 2.071524796222647,
+      "mae_p95_K": 3.592909872531891,
+      "tmax_median_K": 1.0870361328125,
+      "rmse_K": 3.047108998330471,
+      "passes": {
+        "field_mae": false,
+        "worst5pct": true,
+        "tmax_median": false
+      }
+    }
+  }
+}

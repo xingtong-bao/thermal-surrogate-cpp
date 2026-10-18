@@ -80,3 +80,38 @@ Recorded as a negative result. Untried and cheap: a narrower scaling range
 freezing the encoder. Either way the trade-off remains explicit: what-if
 correctness versus ~0.2–0.4 K of static hotspot accuracy, and the gate
 decides, not a preference.
+
+## Third round: narrower scaling, early stopping, frozen encoder (v1.4)
+
+Two more variants, each with the contract gates evaluated on the 50-sample
+subset every two epochs and the best epoch kept (`--eval-every 2`):
+
+| variant | gain | eval50 MAE / p95 / Tmax median | 50-sample gates | full 3 000-sample gates |
+|---|---|---|---|---|
+| A: f ~ U(0.85, 1.15), all layers, 12 epochs | 0.85 | 1.415 / 1.860 / 0.725 K | **pass, pass, pass** | MAE 2.072 (gate 2.012) fail; p95 3.59 pass; Tmax 1.087 (gate 0.952) fail |
+| B: f ~ U(0.7, 1.3), encoder + bottleneck frozen | 0.37 | 2.06 / 3.08 / 3.47 K | fail | — |
+| reference v1.0 | 0.10 | 1.05 / 1.66 / 0.61 K | pass | MAE 1.829, p95 3.447, Tmax 0.865: pass |
+
+Artefacts and C++ checks for A: `models_v1.2_poweraug_narrow/`,
+`power_aug_lifecycle_poweraug_narrow.json` (parity 6e-5 K; HotSpot-verified
+gain 1.66 seen / 0.20 unseen); full-split numbers in
+`power_aug_narrow_fulltest.json`.
+
+Three things learned:
+
+1. **The narrower range is the right knob.** Scaling by ±15 % instead of
+   ±30 % keeps the gain at 0.85 and costs the hotspot far less (0.73 K vs
+   1.13 K on the subset). Early stopping did its job: epoch 10 of the same
+   run had briefly failed the hotspot gate (1.37 K) and was skipped.
+2. **Freezing the encoder does not work.** The power dependence lives in
+   the encoder features, not only in the decoder: with the encoder frozen
+   the gain stops at 0.37 and the hotspot degrades to 3.5 K.
+3. **The 50-sample subset is a smoke gate, not a release gate.** Candidate
+   A passes all three gates on the committed subset and fails two of them
+   on the full 3 000-sample split (MAE 2.072 vs 2.012, Tmax median 1.087 vs
+   0.952), because the every-60th subset under-samples the hot, dense
+   cases. The lifecycle script now runs the full-split check as the release
+   decision, and the contract says which is which. Candidate A stays a
+   candidate: a model with a correct power response, 0.24 K worse on the
+   field and 0.22 K worse on the hotspot than the published one. Whether a
+   product takes that trade is its decision; the numbers are on the table.

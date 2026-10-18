@@ -47,9 +47,14 @@ in the power (HotSpot: 1.000 ± 0.002), so every stored sample yields exact
 what-if samples by scaling the power and the temperature rise together.
 Fine-tuning on such augmented copies raises the power gain from 0.1 to
 **0.9** while the known-chip error stays inside its gate (1.46 K vs 2.01 K);
-the hotspot-median gate (0.95 K) is missed by 0.18 K, so v1.2 is a measured
-candidate, not a release. A hotspot-weighted retrain (v1.3) did not close
-the gap (1.36 K); the negative result is recorded.
+the hotspot-median gate (0.95 K) is missed by 0.18 K. Four variants later
+(hotspot-weighted loss: worse; frozen encoder: gain stalls at 0.37;
+narrower ±15 % scaling with early stopping: passes every gate on the
+committed 50-sample subset but misses the full-split MAE gate by 0.06 K and
+the hotspot gate by 0.13 K), the trade stands at "correct power response
+for ~0.2 K of static accuracy", and the gates keep it a candidate. The
+full 3 000-sample split is now the release gate; the committed subset is a
+smoke gate.
 [power_aug_notes.md](docs/results/power_aug_notes.md)
 
 **Swapping the model (S8.7/S8.8).** The benchmark's U-FNO, exported with its

@@ -120,7 +120,10 @@ reproduced reliably by the baseline (argmax of prediction equals argmax of label
 informative only and carries no gate; S2b revisits this.
 
 The gate is enforced by a test (`S6.1`) on a fixed 50-sample subset; a failing gate fails
-the build. The 1.1 factor leaves room for fp32 ONNX export drift and nothing else.
+the build. That subset is a *smoke* gate: S8.5 showed a candidate that passes it and fails
+the same three gates on the full 3 000-sample test split (which under-samples the hot, dense
+cases less). A model *release* therefore requires the gates on the full split
+(`tools/lifecycle_poweraug.py`, `docs/results/power_aug_notes.md`). The 1.1 factor leaves room for fp32 ONNX export drift and nothing else.
 Numerical parity gates (purpose: catch wiring bugs such as a wrong layout, dtype or
 normalization constant, which produce errors ≥ 0.1 K; not to measure floating-point noise):
 
