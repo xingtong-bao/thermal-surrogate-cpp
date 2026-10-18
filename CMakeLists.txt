@@ -93,6 +93,16 @@ if(TS_BUILD_TESTS)
   gtest_discover_tests(ts_tests)
 endif()
 
+# ---- Python binding (optional) ---------------------------------------------------
+option(TS_BUILD_PYTHON "Build the pybind11 module (needs a Python with numpy)" OFF)
+if(TS_BUILD_PYTHON)
+  include(cmake/pybind11.cmake)
+  pybind11_add_module(thermal_surrogate_py python/thermal_surrogate_py.cpp)
+  set_target_properties(thermal_surrogate_py PROPERTIES OUTPUT_NAME thermal_surrogate
+                        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/python" BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}")
+  target_link_libraries(thermal_surrogate_py PRIVATE thermal_surrogate onnxruntime::onnxruntime)
+endif()
+
 # ---- benchmarks -----------------------------------------------------------------
 # Separate executables so a CI build can skip them; numbers go to docs/results/.
 option(TS_BUILD_BENCH "Build the benchmark executables" ON)
