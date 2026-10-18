@@ -1,0 +1,114 @@
+{
+  "batch64_vs_single_max_abs_diff_K": {
+    "contract": 3.0517578125e-05,
+    "nchw": 3.0517578125e-05
+  },
+  "benchmark": "throughput vs batch size, layout and output copy",
+  "intra_op_threads": 4,
+  "machine": {
+    "build_type": "Release",
+    "compiler": "clang 21.0.0 (clang-2100.1.1.101)",
+    "cpu": "Apple M4",
+    "efficiency_cores": 6,
+    "hardware_threads": 10,
+    "memory_gb": 16.0,
+    "model": "Mac16,12",
+    "os": "macOS",
+    "performance_cores": 4
+  },
+  "onnxruntime": "1.23.2",
+  "repeat": 20,
+  "rows": [
+    {
+      "batch": 1,
+      "layout": "contract (B,X,Y,Z,P)",
+      "median_ms_per_call": 20.489667,
+      "ms_per_sample": 20.489667,
+      "output": "zero-copy",
+      "path": "predict_batch(model_dynamic)",
+      "samples_per_s": 48.80508794994081
+    },
+    {
+      "batch": 1,
+      "layout": "NCHW (B,P,X,Y)",
+      "median_ms_per_call": 20.366959,
+      "ms_per_sample": 20.366959,
+      "output": "zero-copy",
+      "path": "raw session(model_nchw_dynamic)",
+      "samples_per_s": 49.099131588569506
+    },
+    {
+      "batch": 8,
+      "layout": "contract (B,X,Y,Z,P)",
+      "median_ms_per_call": 236.591375,
+      "ms_per_sample": 29.573921875,
+      "output": "zero-copy",
+      "path": "predict_batch(model_dynamic)",
+      "samples_per_s": 33.81357414233718
+    },
+    {
+      "batch": 8,
+      "layout": "NCHW (B,P,X,Y)",
+      "median_ms_per_call": 235.358667,
+      "ms_per_sample": 29.419833375,
+      "output": "zero-copy",
+      "path": "raw session(model_nchw_dynamic)",
+      "samples_per_s": 33.99067517662309
+    },
+    {
+      "batch": 32,
+      "layout": "contract (B,X,Y,Z,P)",
+      "median_ms_per_call": 932.903291,
+      "ms_per_sample": 29.15322784375,
+      "output": "zero-copy",
+      "path": "predict_batch(model_dynamic)",
+      "samples_per_s": 34.30151904137725
+    },
+    {
+      "batch": 32,
+      "layout": "NCHW (B,P,X,Y)",
+      "median_ms_per_call": 928.7352079999999,
+      "ms_per_sample": 29.022975249999998,
+      "output": "zero-copy",
+      "path": "raw session(model_nchw_dynamic)",
+      "samples_per_s": 34.4554612814894
+    },
+    {
+      "batch": 64,
+      "layout": "contract (B,X,Y,Z,P)",
+      "median_ms_per_call": 1848.550167,
+      "ms_per_sample": 28.883596359375,
+      "output": "zero-copy",
+      "path": "predict_batch(model_dynamic)",
+      "samples_per_s": 34.62172741779855
+    },
+    {
+      "batch": 64,
+      "layout": "NCHW (B,P,X,Y)",
+      "median_ms_per_call": 1848.414,
+      "ms_per_sample": 28.88146875,
+      "output": "zero-copy",
+      "path": "raw session(model_nchw_dynamic)",
+      "samples_per_s": 34.62427789445438
+    },
+    {
+      "batch": 1,
+      "layout": "contract (B,X,Y,Z,P)",
+      "median_ms_per_call": 31.339541,
+      "ms_per_sample": 31.339541,
+      "output": "copy into std::vector",
+      "path": "predict(model)",
+      "samples_per_s": 31.908571985786264
+    },
+    {
+      "batch": 1,
+      "layout": "contract (B,X,Y,Z,P)",
+      "median_ms_per_call": 30.800625,
+      "ms_per_sample": 30.800625,
+      "output": "zero-copy",
+      "path": "predict_into(model)",
+      "samples_per_s": 32.466873642986144
+    }
+  ],
+  "timing": "median of repeat calls after one warm-up"
+}

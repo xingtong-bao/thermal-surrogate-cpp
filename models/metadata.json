@@ -93,6 +93,7 @@
       "sha256": "709eae9ef9954dbb6f596f38ca71d04c01ba6d734a505bda8ce10ef71b4b53d3",
       "max_abs_diff_vs_torch_K": 3.0517578125e-05,
       "dynamic_axes": false,
+      "layout": "contract (B,X,Y,Z,P)",
       "ir_version": 8,
       "opset": 17,
       "node_count": 49
@@ -102,10 +103,21 @@
       "sha256": "4ec486ebcb4e48f71371b2e33fae95bce0e74f73ecf90160ca8b05717095a16c",
       "max_abs_diff_vs_torch_K": 3.0517578125e-05,
       "dynamic_axes": true,
+      "layout": "contract (B,X,Y,Z,P)",
       "ir_version": 8,
       "opset": 17,
       "node_count": 49
+    },
+    "model_nchw_dynamic.onnx": {
+      "size_bytes": 20257526,
+      "sha256": "645a24ea688b1ab3ec07b09f51f8d0ab4866e3f04a82502be8c379f533243a2f",
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "dynamic_axes": true,
+      "layout": "NCHW (B,P,X,Y)",
+      "ir_version": 8,
+      "opset": 17,
+      "node_count": 45
     }
   },
-  "dynamic_constraints": "model_dynamic.onnx: X and Y must be multiples of 8 (three 2x max-pools); Z must be 1; P must be 7"
+  "dynamic_constraints": "model_dynamic.onnx: X and Y must be multiples of 8 (three 2x max-pools); Z must be 1; P must be 7. model_nchw_dynamic.onnx: batch dynamic only, input (B,7,64,64), output (B,1,64,64); S4.5 layout study, not a contract artefact"
 }

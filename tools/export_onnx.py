@@ -66,6 +66,24 @@ def sha256(path):
     return h.hexdigest()
 
 
+class NCHWWrapper(torch.nn.Module):
+    """Same network and constants, but the input is already (B, P, X, Y): no
+    transpose inside the graph. Used only by the S4.5 layout comparison; the
+    contract layout stays (B, X, Y, Z, P)."""
+
+    def __init__(self, net, x_mean, x_std, y_mean, y_std):
+        super().__init__()
+        self.net = net
+        self.register_buffer("x_mean", x_mean.reshape(1, -1, 1, 1).float())
+        self.register_buffer("x_std", x_std.reshape(1, -1, 1, 1).float())
+        self.register_buffer("y_mean", y_mean.reshape(()).float())
+        self.register_buffer("y_std", y_std.reshape(()).float())
+
+    def forward(self, x):                       # x: (B,P,X,Y)
+        out = self.net((x - self.x_mean) / self.x_std)
+        return out * self.y_std + self.y_mean   # (B,1,X,Y)
+
+
 class ContractWrapper(torch.nn.Module):
     """U-Net plus normalization and layout, so the graph speaks the contract."""
 
@@ -123,12 +141,20 @@ def main():
     fixture_mae = float((got[0, ..., 0].numpy() - z["expected_output"][..., 0]).__abs__().mean())
     print(f"[wrapper] max|diff| vs benchmark path = {wrap_diff:.2e}; fixture MAE vs truth = {fixture_mae:.3f} K")
 
-    # ---- export: fixed shape, then dynamic ----------------------------------------
+    # ---- export: fixed shape, dynamic, and the NCHW variant for the layout study ----
+    nchw = NCHWWrapper(net, x_norm.mean.detach(), x_norm.std.detach(),
+                       y_norm.mean.detach(), y_norm.std.detach()).eval()
+    x_nchw = x.squeeze(-2).permute(0, 3, 1, 2).contiguous()
+    variants = (
+        ("model.onnx", wrapper, x, None),
+        ("model_dynamic.onnx", wrapper, x, {"input": {0: "batch", 1: "X", 2: "Y"}, "field": {0: "batch", 1: "X", 2: "Y"}}),
+        ("model_nchw_dynamic.onnx", nchw, x_nchw, {"input": {0: "batch"}, "field": {0: "batch"}}),
+    )
     outputs = {}
-    for name, dynamic in (("model.onnx", False), ("model_dynamic.onnx", True)):
+    for name, module, example, dyn in variants:
         path = os.path.join(models_dir, name)
-        kw = dict(dynamic_axes={"input": {0: "batch", 1: "X", 2: "Y"}, "field": {0: "batch", 1: "X", 2: "Y"}}) if dynamic else {}
-        torch.onnx.export(wrapper, x, path, opset_version=OPSET, input_names=["input"], output_names=["field"],
+        kw = dict(dynamic_axes=dyn) if dyn else {}
+        torch.onnx.export(module, example, path, opset_version=OPSET, input_names=["input"], output_names=["field"],
                           do_constant_folding=True, **kw)
         import onnx
         m = onnx.load(path)
@@ -136,10 +162,15 @@ def main():
         # Run it once through ONNX Runtime and compare with the PyTorch wrapper.
         import onnxruntime as ort
         sess = ort.InferenceSession(path, providers=["CPUExecutionProvider"])
-        y_ort = sess.run(["field"], {"input": z["input"][None]})[0]
-        diff = float(np.abs(y_ort - got.numpy()).max())
+        feed = x_nchw.numpy() if module is nchw else z["input"][None]
+        y_ort = sess.run(["field"], {"input": feed})[0]
+        ref = got.numpy()
+        if module is nchw:
+            y_ort = np.transpose(y_ort, (0, 2, 3, 1))          # (B,1,X,Y) -> (B,X,Y,1) for the comparison
+        diff = float(np.abs(y_ort - ref).max())
         outputs[name] = {"size_bytes": os.path.getsize(path), "sha256": sha256(path), "max_abs_diff_vs_torch_K": diff,
-                         "dynamic_axes": bool(dynamic), "ir_version": m.ir_version,
+                         "dynamic_axes": bool(dyn), "layout": "NCHW (B,P,X,Y)" if module is nchw else "contract (B,X,Y,Z,P)",
+                         "ir_version": m.ir_version,
                          "opset": [o.version for o in m.opset_import if o.domain in ("", "ai.onnx")][0],
                          "node_count": len(m.graph.node)}
         print(f"[{name}] {outputs[name]['size_bytes']/1e6:.1f} MB, {outputs[name]['node_count']} nodes, opset {outputs[name]['opset']}, "
@@ -162,7 +193,8 @@ def main():
                                   "Constants are listed for inspection and must equal contract/stats.json checkpoint_normalizer.",
                           "channels": CHANNELS, "x_mean": ck["x_mean"], "x_std": ck["x_std"], "y_mean": ck["y_mean"], "y_std": ck["y_std"]},
         "files": outputs,
-        "dynamic_constraints": "model_dynamic.onnx: X and Y must be multiples of 8 (three 2x max-pools); Z must be 1; P must be 7",
+        "dynamic_constraints": "model_dynamic.onnx: X and Y must be multiples of 8 (three 2x max-pools); Z must be 1; P must be 7. "
+                               "model_nchw_dynamic.onnx: batch dynamic only, input (B,7,64,64), output (B,1,64,64); S4.5 layout study, not a contract artefact",
     }
     with open(os.path.join(models_dir, "metadata.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)

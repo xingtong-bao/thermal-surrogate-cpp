@@ -77,3 +77,37 @@ TEST(Predictor, ParityWithPythonOnnxRuntime) {
   EXPECT_LT(worst_ort, 1e-4) << "C++ vs Python ONNX Runtime";
   EXPECT_LT(worst_torch, 5e-3) << "C++ vs PyTorch batch-1";
 }
+
+TEST(Predictor, ZeroCopyAndBatchAgreeWithPredict) {
+  // predict_into must be bit-identical to predict (same graph, same call);
+  // predict_batch on the dynamic graph may differ by fp32 accumulation order
+  // (contract parity gate 5e-3 K applies), and the fixed graph must refuse n > 1.
+  const std::string models = std::string(TS_MODEL_PATH).substr(0, std::string(TS_MODEL_PATH).rfind('/'));
+  Predictor fixed(TS_MODEL_PATH, kMetadata);
+  Predictor dyn(models + "/model_dynamic.onnx", kMetadata);
+  EXPECT_FALSE(fixed.batch_capable());
+  EXPECT_TRUE(dyn.batch_capable());
+
+  const auto x = npy::load_f32(pair_file("input", 0));
+  Output a, b;
+  fixed.predict(Input{x.data.data(), kInputShape}, a);
+  std::vector<float> buf(kCells);
+  fixed.predict_into(Input{x.data.data(), kInputShape}, buf.data(), b);
+  ASSERT_TRUE(a.status.ok() && b.status.ok());
+  EXPECT_EQ(a.field, buf);
+  EXPECT_EQ(a.tmax, b.tmax);
+  EXPECT_TRUE(b.field.empty());
+
+  std::vector<float> in2(2 * kInputSize), out2(2 * kCells);
+  std::copy(x.data.begin(), x.data.end(), in2.begin());
+  std::copy(x.data.begin(), x.data.end(), in2.begin() + static_cast<long>(kInputSize));
+  EXPECT_EQ(fixed.predict_batch(in2.data(), 2, out2.data()).code, StatusCode::ShapeMismatch);
+  ASSERT_TRUE(dyn.predict_batch(in2.data(), 2, out2.data()).ok());
+  double worst = 0;
+  for (std::size_t i = 0; i < kCells; ++i) {
+    worst = std::max(worst, static_cast<double>(std::fabs(out2[i] - a.field[i])));
+    worst = std::max(worst, static_cast<double>(std::fabs(out2[kCells + i] - a.field[i])));
+  }
+  EXPECT_LT(worst, 5e-3);
+  EXPECT_EQ(dyn.predict_batch(nullptr, 2, out2.data()).code, StatusCode::InvalidInput);
+}

@@ -44,6 +44,20 @@ class Predictor {
   // tmax_index, latency_ms, source = Surrogate, model_version, status = Ok.
   void predict(const Input& in, Output& out) const noexcept;
 
+  // Zero-copy variant: the model writes straight into `field` (kCells floats
+  // owned by the caller) and nothing is allocated per call. Fills the scalar
+  // fields of `out` but leaves out.field empty. Same checks as predict().
+  void predict_into(const Input& in, float* field, Output& out) const noexcept;
+
+  // Batch: `inputs` is n contiguous contract tensors (n * kInputSize floats),
+  // `fields` receives n * kCells floats. Requires a batch-capable model
+  // (models/model_dynamic.onnx); on the fixed-shape model returns
+  // ShapeMismatch. Per-sample results are numerically the batched kernel's:
+  // may differ from predict() by float32 accumulation order (see S3.2).
+  Status predict_batch(const float* inputs, std::size_t n, float* fields) const noexcept;
+
+  bool batch_capable() const;                 // true when the loaded graph has a dynamic batch axis
+
   const std::string& model_version() const;   // models/metadata.json -> model_version
   const std::string& model_path() const;
 
