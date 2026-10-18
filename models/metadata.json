@@ -1,0 +1,111 @@
+{
+  "model_version": "level4-unet-1.0.0",
+  "schema_version": "1.0.0",
+  "source": {
+    "benchmark": "IC-ThermBench (CC BY 4.0)",
+    "checkpoint": "checkpoints/level4_UNet/model.pt",
+    "checkpoint_sha256": "1207ecfef9b25e21d69e242e89b5ae2175abbc262ace9c33fd1beb561f460b27",
+    "training_data": "level4_steady (S4), split per contract/stats.json",
+    "architecture": "UNet in=7 out=1 channels (58,116,232,348), 5,062,125 parameters"
+  },
+  "export": {
+    "tool": "tools/export_onnx.py",
+    "torch": "2.0.1",
+    "onnx": "1.23.2",
+    "onnxruntime": "1.23.2",
+    "opset": 17,
+    "date": "2026-10-18"
+  },
+  "io": {
+    "input": {
+      "name": "input",
+      "shape": [
+        1,
+        64,
+        64,
+        1,
+        7
+      ],
+      "axes": [
+        "B",
+        "X",
+        "Y",
+        "Z",
+        "P"
+      ],
+      "dtype": "float32",
+      "layout": "C-contiguous, physical units as in contract section 2"
+    },
+    "output": {
+      "name": "field",
+      "shape": [
+        1,
+        64,
+        64,
+        1
+      ],
+      "axes": [
+        "B",
+        "X",
+        "Y",
+        "Z"
+      ],
+      "dtype": "float32",
+      "unit": "K"
+    }
+  },
+  "normalization": {
+    "baked_into_graph": true,
+    "note": "The graph normalizes its input and de-normalizes its output; the client passes physical values. Constants are listed for inspection and must equal contract/stats.json checkpoint_normalizer.",
+    "channels": [
+      "chiplet_power",
+      "grid_x",
+      "grid_y",
+      "local_thermal_k",
+      "ambient_K",
+      "h_w_m2k",
+      "r_convec_k_per_w"
+    ],
+    "x_mean": [
+      45.003807067871094,
+      22.049999237060547,
+      21.899999618530273,
+      49.80644226074219,
+      313.2140197753906,
+      5318.1201171875,
+      0.02211057022213936
+    ],
+    "x_std": [
+      85.82110595703125,
+      14.343846321105957,
+      14.728928565979004,
+      49.249725341796875,
+      8.662182807922363,
+      5113.349609375,
+      0.02954956702888012
+    ],
+    "y_mean": 356.2989501953125,
+    "y_std": 29.173845291137695
+  },
+  "files": {
+    "model.onnx": {
+      "size_bytes": 20257836,
+      "sha256": "709eae9ef9954dbb6f596f38ca71d04c01ba6d734a505bda8ce10ef71b4b53d3",
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "dynamic_axes": false,
+      "ir_version": 8,
+      "opset": 17,
+      "node_count": 49
+    },
+    "model_dynamic.onnx": {
+      "size_bytes": 20257850,
+      "sha256": "4ec486ebcb4e48f71371b2e33fae95bce0e74f73ecf90160ca8b05717095a16c",
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "dynamic_axes": true,
+      "ir_version": 8,
+      "opset": 17,
+      "node_count": 49
+    }
+  },
+  "dynamic_constraints": "model_dynamic.onnx: X and Y must be multiples of 8 (three 2x max-pools); Z must be 1; P must be 7"
+}

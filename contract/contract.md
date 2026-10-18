@@ -114,7 +114,11 @@ informative only and carries no gate; S2b revisits this.
 The gate is enforced by a test (`S6.1`) on a fixed 50-sample subset; a failing gate fails
 the build. The 1.1 factor leaves room for fp32 ONNX export drift and nothing else.
 Numerical parity gates: PyTorch ↔ ONNX Runtime (Python) and ONNX Runtime (Python) ↔ C++
-max-abs-diff `< 1e-5` on fixed fixtures.
+max-abs-diff `< 1e-4 K` on fixed fixtures. (Revised in S3.1 from `1e-5`: outputs are
+float32 values of 300–500 K, where one ulp is 3.05e-5 K; the first export showed exactly
+a 1-ulp difference on some pixels, which is the floor for two fp32 implementations that
+accumulate convolutions in different orders. 1e-4 K leaves ~3 ulp and is still 10⁴×
+below the accuracy gate.)
 
 ## 5. Fallback rules
 
