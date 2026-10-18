@@ -23,18 +23,21 @@ option(TS_BUILD_TESTS "Build the GoogleTest suite" ON)
 option(TS_WARNINGS_AS_ERRORS "Treat warnings as errors" ON)
 
 include(cmake/onnxruntime.cmake)
+include(cmake/json.cmake)
 
 # ---- library ------------------------------------------------------------------
 add_library(thermal_surrogate STATIC
   src/status.cpp
   src/version.cpp
-  src/model_info.cpp)
+  src/model_info.cpp
+  src/npy.cpp
+  src/predictor.cpp)
 target_include_directories(thermal_surrogate PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 # ORT is a private implementation detail: callers of the library include only
 # our headers, which mention no ORT type. It is still exported transitively
 # for linking because the static library needs the shared runtime at link time.
-target_link_libraries(thermal_surrogate PRIVATE onnxruntime::onnxruntime)
+target_link_libraries(thermal_surrogate PRIVATE onnxruntime::onnxruntime nlohmann_json::nlohmann_json)
 target_compile_definitions(thermal_surrogate PRIVATE
   TS_VERSION_STRING="${PROJECT_VERSION}"
   TS_ORT_VERSION_STRING="${TS_ORT_VERSION}")
@@ -49,8 +52,8 @@ set(TS_FIXTURE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures")
 
 # ---- demo ---------------------------------------------------------------------
 add_executable(ts_demo apps/ts_demo.cpp)
-target_link_libraries(ts_demo PRIVATE thermal_surrogate onnxruntime::onnxruntime)
-target_compile_definitions(ts_demo PRIVATE TS_DEFAULT_MODEL_PATH="${TS_MODEL_PATH}")
+target_link_libraries(ts_demo PRIVATE thermal_surrogate onnxruntime::onnxruntime nlohmann_json::nlohmann_json)
+target_compile_definitions(ts_demo PRIVATE TS_DEFAULT_MODEL_PATH="${TS_MODEL_PATH}" TS_FIXTURE_DIR="${TS_FIXTURE_DIR}")
 # The runtime is a shared library inside build/_deps; tell the loader where.
 set_target_properties(ts_demo PROPERTIES BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}")
 
@@ -58,7 +61,7 @@ set_target_properties(ts_demo PROPERTIES BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}")
 if(TS_BUILD_TESTS)
   include(cmake/googletest.cmake)
   enable_testing()
-  add_executable(ts_tests tests/test_skeleton.cpp)
+  add_executable(ts_tests tests/test_skeleton.cpp tests/test_predictor.cpp)
   target_link_libraries(ts_tests PRIVATE thermal_surrogate onnxruntime::onnxruntime GTest::gtest_main)
   target_compile_definitions(ts_tests PRIVATE
     TS_MODEL_PATH="${TS_MODEL_PATH}"

@@ -1,0 +1,125 @@
+{
+  "gate_K": 0.0001,
+  "library_version": "0.1.0",
+  "max_abs_diff_vs_python_ort_K": 0.0,
+  "max_abs_diff_vs_torch_b1_K": 3.0517578125e-05,
+  "mean_abs_diff_vs_python_ort_K": 0.0,
+  "mean_latency_ms_unwarmed": 22.553820800000004,
+  "model_version": "level4-unet-1.0.0",
+  "n_pairs": 10,
+  "note": "latency here includes the first (cold) call; see S4.4 for the benchmark",
+  "onnxruntime_cpp": "1.23.2",
+  "pairs": [
+    {
+      "latency_ms": 23.51125,
+      "max_abs_diff_vs_python_ort_K": 0.0,
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "pair": 0,
+      "tmax_K": 362.6982421875,
+      "tmax_index": [
+        15,
+        24
+      ]
+    },
+    {
+      "latency_ms": 23.34925,
+      "max_abs_diff_vs_python_ort_K": 0.0,
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "pair": 1,
+      "tmax_K": 376.7872009277344,
+      "tmax_index": [
+        29,
+        17
+      ]
+    },
+    {
+      "latency_ms": 22.316667,
+      "max_abs_diff_vs_python_ort_K": 0.0,
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "pair": 2,
+      "tmax_K": 388.874267578125,
+      "tmax_index": [
+        30,
+        18
+      ]
+    },
+    {
+      "latency_ms": 23.264959,
+      "max_abs_diff_vs_python_ort_K": 0.0,
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "pair": 3,
+      "tmax_K": 355.84906005859375,
+      "tmax_index": [
+        27,
+        12
+      ]
+    },
+    {
+      "latency_ms": 21.794625,
+      "max_abs_diff_vs_python_ort_K": 0.0,
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "pair": 4,
+      "tmax_K": 361.47607421875,
+      "tmax_index": [
+        31,
+        17
+      ]
+    },
+    {
+      "latency_ms": 21.15825,
+      "max_abs_diff_vs_python_ort_K": 0.0,
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "pair": 5,
+      "tmax_K": 380.6723327636719,
+      "tmax_index": [
+        41,
+        25
+      ]
+    },
+    {
+      "latency_ms": 22.370541,
+      "max_abs_diff_vs_python_ort_K": 0.0,
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "pair": 6,
+      "tmax_K": 339.1293640136719,
+      "tmax_index": [
+        14,
+        28
+      ]
+    },
+    {
+      "latency_ms": 22.975667,
+      "max_abs_diff_vs_python_ort_K": 0.0,
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "pair": 7,
+      "tmax_K": 399.4298095703125,
+      "tmax_index": [
+        29,
+        12
+      ]
+    },
+    {
+      "latency_ms": 22.670458,
+      "max_abs_diff_vs_python_ort_K": 0.0,
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "pair": 8,
+      "tmax_K": 389.4291076660156,
+      "tmax_index": [
+        31,
+        25
+      ]
+    },
+    {
+      "latency_ms": 22.126541,
+      "max_abs_diff_vs_python_ort_K": 0.0,
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "pair": 9,
+      "tmax_K": 341.331787109375,
+      "tmax_index": [
+        17,
+        28
+      ]
+    }
+  ],
+  "passes_gate": true
+}
