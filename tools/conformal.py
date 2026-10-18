@@ -51,6 +51,9 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--bench", required=True)
     p.add_argument("--repo", default=os.path.join(os.path.dirname(__file__), ".."))
+    p.add_argument("--checkpoint", default="checkpoints/level4_UNet/model.pt", help="relative to --bench, or absolute")
+    p.add_argument("--version", default="level4-unet-1.0.0")
+    p.add_argument("--out", default=None, help="default: <repo>/contract/conformal.json")
     a = p.parse_args()
     bench, repo = os.path.abspath(a.bench), os.path.abspath(a.repo)
     os.chdir(bench)
@@ -66,7 +69,12 @@ def main():
     sys.argv = ["run.py", "--model", "UNet", "--data", "level4", "--task", "test", "--quiet"]
     set_seed(0)
     _, _, xva, yva, _, _ = data_provider(parse_args())
-    x_norm, model, y_norm = load_checkpoint("checkpoints/level4_UNet/model.pt")
+    try:
+        x_norm, model, y_norm = load_checkpoint(a.checkpoint)
+    except ValueError:
+        from exp.exp_basic import build_model
+        x_norm, model, y_norm = load_checkpoint(a.checkpoint, build_model("UNet", 7, 1, 64))
+    model.eval()
     pred = _predict(model, x_norm, y_norm, xva.contiguous(), "UNet", "cpu").numpy().astype(np.float64)   # (n,X,Y,Z)
     truth = yva.numpy().astype(np.float64)
     n = pred.shape[0]
@@ -94,13 +102,14 @@ def main():
     print("[overall]", {k: round(v, 3) for k, v in overall.items()})
     doc = {"method": "split conformal prediction; scores = per-sample field MAE and |Tmax error| (K); "
                      "finite-sample quantile ceil((n+1)(1-alpha))/n; group-conditional on predicted rise = tmax_pred - ambient",
-           "calibration_set": "level4 validation split (1200 samples; never the test split)", "model_version": "level4-unet-1.0.0",
+           "calibration_set": "level4 validation split (1200 samples; never the test split)", "model_version": a.version,
            "levels": list(LEVELS), "n_calibration": int(n), "overall": overall, "rise_bins": bins,
            "applies_to": "inputs that pass rules I1-I5 (exchangeable with the calibration set); undefined for OOD inputs",
            "validation_mae_mean_K": float(mae.mean())}
-    with open(os.path.join(repo, "contract", "conformal.json"), "w") as f:
+    out = a.out or os.path.join(repo, "contract", "conformal.json")
+    with open(out, "w") as f:
         json.dump(doc, f, indent=2)
-    print("-> contract/conformal.json")
+    print("->", os.path.relpath(out, repo))
 
 
 if __name__ == "__main__":

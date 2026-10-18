@@ -7,45 +7,56 @@
 
 A C++ inference library that wraps a published neural thermal surrogate
 (the IC-ThermBench level4 U-Net) for early-stage chip floorplanning, and
-tells you **when not to trust it**. The surrogate predicts a 64×64
-steady-state temperature field in ~22 ms; the library validates every input
-against a written contract, detects inputs the model has never seen, and
-falls back to a physics reference solver instead of returning a confident
-wrong answer. Every number below was measured in this repository and links
-to the file that holds it.
+makes it safe to use: it answers in ~22 ms with a 1 K error on the chips
+the model knows, says so with a per-prediction error bound, recognises the
+chips it does not know, and hands those to a physics solver instead of
+returning a confident wrong answer. Every number below was measured in this
+repository and links to the file that holds it.
 
 ![architecture](docs/figures/architecture.png)
 
-## What it does, in numbers
+## What works
 
-| | seen chips (level4 test) | unseen chips (level5) |
+| | result | file |
 |---|---|---|
-| surrogate alone, MAE vs ground truth | **1.05 K** (50 samples), 1.83 K (full 3 000) | 14.8 K |
-| library with fallback (dispatcher) | **1.05 K**, 22 ms, 0 % fallback | **3.36 K**, 2.0 s, 100 % fallback to HotSpot |
-| what catches the unseen chips | rule I5 (configuration novelty): rejects 100 % of unseen chips, 1 % of seen | |
-
-Source: [backend_comparison.csv](docs/results/backend_comparison.csv),
-[fallback_curve.json](docs/results/fallback_curve.json),
-[layout_novelty.json](docs/results/layout_novelty.json).
+| speed | one 64×64 field in **22 ms** (CPU, 4 threads); the physics solver needs 2–3 s | [latency_single.json](docs/results/latency_single.json) |
+| accuracy on known chips | **1.05 K** MAE on the 50-sample test subset, 1.83 K on the full 3 000 (authors: 1.83 K) | [baseline_notes.md](docs/results/baseline_notes.md) |
+| knows what it does not know | the novelty guard rejects **100 %** of unseen chips at 1 % false rejects | [layout_novelty.json](docs/results/layout_novelty.json) |
+| says how sure it is | 90 % error bound per prediction, 1.6–3.7 K depending on the design; held-out coverage 1.00 | [conformal_notes.md](docs/results/conformal_notes.md) |
+| safe fallback | with the solver behind it, unseen chips go from 14.8 K to **3.4 K**; blended 2.2 K vs 7.9 K surrogate-only | [backend_comparison.csv](docs/results/backend_comparison.csv) |
+| learns from the solver | 50 solver answers per unseen chip take the surrogate from 17.1 K to **2.8 K** on that chip | [lifecycle_notes.md](docs/results/lifecycle_notes.md) |
+| engineering | bit-identical to the Python export, 8-thread ThreadSanitizer clean, 36 tests, CI | [parity_cpp.json](docs/results/parity_cpp.json), [concurrency.json](docs/results/concurrency.json) |
 
 ![results](docs/figures/results_summary.png)
 
-## Three findings worth knowing before you use any thermal surrogate
+## Where the model stops, and what that asks of the data
 
-1. **The model learned ten chips, not heat conduction.** Scaling every
-   chiplet's power by 10 % should move the hotspot by 6.3 K; the surrogate
-   moves it by 0.6 K (gain 0.1, the same at ±2 %). The ambient temperature,
-   by contrast, is reproduced exactly (gain 1.0 even 50 % outside the
-   training range). [sensitivity_notes.md](docs/results/sensitivity_notes.md)
-2. **A per-channel range check cannot see a new layout.** 80 % of the unseen
-   chips lie inside every channel's training range and still carry 14 K of
-   error (gate 2.0 K). A six-number configuration vector (chip size, chiplet
-   count, total power, max density, mean chiplet area) separates seen from
-   unseen chips perfectly (AUROC 1.0). [extrapolation_notes.md](docs/results/extrapolation_notes.md)
-3. **Batching does not help on CPU, and layout does not matter.** Per-sample
-   cost is flat from batch 8 upward; NCHW and the contract layout are within
-   0.3 %; zero-copy output is a 1.7 % effect. Get concurrency from threads,
-   not batches. [throughput_notes.md](docs/results/throughput_notes.md)
+Each limit below was measured, traced to its cause in the training data,
+and turned into a requirement for how a production surrogate's data must
+be generated. None of them is a limit of the approach.
+
+| measured limit | cause in the data | requirement for a product |
+|---|---|---|
+| power what-ifs: the model reproduces 0.1–0.3 of the true hotspot change (solver-verified) | 14 discrete power values, each tied to a layout; the model never saw "same chip, other power" | sample power continuously; or augment with the exact linear response (S8.5, see below) |
+| unseen chips: 14 K error even when every input is in range | 10 chips in training; the model learned ten layouts, not conduction | generate data over the design space; let every solver run extend the training set and the novelty bank |
+| cooling what-ifs: slope 2× the solver's | same as above | same; keep the solver in the loop for knob changes |
+| hotspot location: 3.7 % exact | flat fields near the maximum | report the temperature, not the cell |
+
+**S8.5 — fixing the power response without a solver.** Conduction is linear
+in the power (HotSpot: 1.000 ± 0.002), so every stored sample yields exact
+what-if samples by scaling the power and the temperature rise together.
+Fine-tuning on such augmented copies raises the power gain from 0.1 to
+**0.9** while the known-chip error stays inside its gate (1.46 K vs 2.01 K);
+the hotspot-median gate (0.95 K) is missed by 0.18 K, so v1.2 is a measured
+candidate, not a release.
+[power_aug_notes.md](docs/results/power_aug_notes.md)
+
+**Does this prove the AI approach does not work?** No. It shows that *this*
+public model is reliable inside its training distribution and unreliable
+outside it, that the boundary can be detected automatically, that the
+solver covers the outside, and that the outside shrinks with data the
+product generates anyway. That is the shape of a working system; the
+contribution here is measuring every edge of it.
 
 ## Quick start
 
@@ -175,6 +186,8 @@ must know when to trust the surrogate:
   1.45 K and passes two of the three gates; the hotspot gate still fails by
   25 %, so no v1.1 replaces v1.0. [lifecycle_notes.md](docs/results/lifecycle_notes.md)
 
+![power augmentation](docs/results/power_aug_gain.png)
+
 ![exploration](docs/results/exploration_demo.png)
 
 | lifecycle step | v1.0 | v1.1 (50 shots) | v1.1 (50 shots + replay 250) |
@@ -255,7 +268,7 @@ bench/           latency, throughput, dynamic size
 tests/           GoogleTest suite + fixtures (parity pairs, eval50 subset, validator expectations)
 tools/           Python: asset fetch, baseline, statistics, analyses, export, parity, HotSpot wrapper
 models/          metadata.json, config_bank.npy, fd_solver_params.json (ONNX files via release)
-models_v1.1_*/   fine-tuned candidates with their own metadata, bank and conformal table (stage 8)
+models_v1.1_*/, models_v1.2_poweraug/   candidates with their own metadata, bank and conformal table (stage 8)
 docs/results/    every measured number, with notes; docs/failure_analysis.md; docs/integration_design.md
 ```
 

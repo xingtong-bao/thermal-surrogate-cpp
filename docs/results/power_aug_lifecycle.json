@@ -1,0 +1,99 @@
+{
+  "version": "level4-unet-poweraug-1.2.0",
+  "finetune": {
+    "n_train": 10800,
+    "epochs": 12,
+    "lr": 0.0001,
+    "f_range": [
+      0.7,
+      1.3
+    ],
+    "device": "mps",
+    "finetune_time_s": 1763.4614810943604,
+    "before": {
+      "eval50_mae_K": 1.0509601086378098,
+      "power_gain": {
+        "x0.9": 0.12305026841919088,
+        "x1.1": 0.08684180409892635
+      }
+    },
+    "after": {
+      "eval50_mae_K": 1.4600934314727783,
+      "power_gain": {
+        "x0.9": 0.8987928788237379,
+        "x1.1": 0.9280779703927685
+      }
+    }
+  },
+  "parity_max_abs_diff_K": 6.103515625e-05,
+  "conformal_overall": {
+    "mae_q90_K": 3.412841632962227,
+    "tmax_err_q90_K": 4.50177001953125,
+    "mae_q95_K": 4.002380304038525,
+    "tmax_err_q95_K": 5.778533935546875
+  },
+  "gates": {
+    "field_mae_K": 2.012188324971994,
+    "worst5pct_per_sample_mae_K": 3.7921820611879227,
+    "tmax_abs_err_median_K": 0.9517745971679689,
+    "factor": 1.1
+  },
+  "seen_eval50_cpp": {
+    "surrogate_mae_K": 1.46009306,
+    "surrogate_mae_p95_K": 1.98019,
+    "tmax_abs_err_median_K": 1.12766,
+    "fallback_rate": 0.0,
+    "passes": {
+      "field_mae": true,
+      "worst5pct": true,
+      "tmax_median": false
+    },
+    "passes_all": false
+  },
+  "unseen_level5_cpp": {
+    "surrogate_mae_K": 12.9715796,
+    "surrogate_mae_p95_K": 27.2193,
+    "tmax_abs_err_median_K": 17.7491,
+    "fallback_rate": 1.0
+  },
+  "hotspot_gain_v1.2": {
+    "level4": {
+      "n": 10,
+      "gain_mean": 1.5895077083943663,
+      "gain_median": 1.5987620500318227,
+      "gain_min": 0.7863965587339192,
+      "gain_max": 2.441682850008976,
+      "hotspot_linearity_mean": 0.9998871737899963,
+      "hotspot_linearity_std": 0.0016189454632038883
+    },
+    "level5": {
+      "n": 10,
+      "gain_mean": 0.2986382509833517,
+      "gain_median": 0.28087548519360495,
+      "gain_min": -0.01805390471907225,
+      "gain_max": 0.7172257250945776,
+      "hotspot_linearity_mean": 0.9999991763067634,
+      "hotspot_linearity_std": 0.0028917008817354504
+    }
+  },
+  "hotspot_gain_v1.0": {
+    "level4": {
+      "n": 10,
+      "gain_mean": 0.2859981554433654,
+      "gain_median": 0.28414627061200803,
+      "gain_min": -0.11886293957247206,
+      "gain_max": 0.6985627091947234,
+      "hotspot_linearity_mean": 0.9998871737899963,
+      "hotspot_linearity_std": 0.0016189454632038883
+    },
+    "level5": {
+      "n": 10,
+      "gain_mean": 0.05474270563915322,
+      "gain_median": 0.07532197206901453,
+      "gain_min": -0.4069838414340326,
+      "gain_max": 0.43648404575556893,
+      "hotspot_linearity_mean": 0.9999991763067634,
+      "hotspot_linearity_std": 0.0028917008817354504
+    }
+  }
+}

@@ -1,0 +1,430 @@
+{
+  "method": "HotSpot grid model (tools/reference_cli.py) on the same inputs with chiplet power scaled; gain = surrogate dTmax / HotSpot dTmax; HotSpot linearity = dTmax / (df * rise) should be 1",
+  "factors": [
+    0.9,
+    1.1
+  ],
+  "summary": {
+    "level4": {
+      "n": 10,
+      "gain_mean": 1.5895077083943663,
+      "gain_median": 1.5987620500318227,
+      "gain_min": 0.7863965587339192,
+      "gain_max": 2.441682850008976,
+      "hotspot_linearity_mean": 0.9998871737899963,
+      "hotspot_linearity_std": 0.0016189454632038883
+    },
+    "level5": {
+      "n": 10,
+      "gain_mean": 0.2986382509833517,
+      "gain_median": 0.28087548519360495,
+      "gain_min": -0.01805390471907225,
+      "gain_max": 0.7172257250945776,
+      "hotspot_linearity_mean": 0.9999991763067634,
+      "hotspot_linearity_std": 0.0028917008817354504
+    }
+  },
+  "rows": [
+    {
+      "set": "level4",
+      "i": 0,
+      "factor": 0.9,
+      "rise_hotspot_K": 30.351715087890625,
+      "dTmax_surrogate_K": -4.0628662109375,
+      "dTmax_hotspot_K": -3.040008544921875,
+      "gain_vs_hotspot": 1.3364653917582694,
+      "hotspot_linearity": 1.0015936615505274
+    },
+    {
+      "set": "level4",
+      "i": 0,
+      "factor": 1.1,
+      "rise_hotspot_K": 30.351715087890625,
+      "dTmax_surrogate_K": 5.673065185546875,
+      "dTmax_hotspot_K": 3.029998779296875,
+      "gain_vs_hotspot": 1.8722994954022179,
+      "hotspot_linearity": 0.9982957373324007
+    },
+    {
+      "set": "level4",
+      "i": 1,
+      "factor": 0.9,
+      "rise_hotspot_K": 40.41912841796875,
+      "dTmax_surrogate_K": -8.211273193359375,
+      "dTmax_hotspot_K": -4.04998779296875,
+      "gain_vs_hotspot": 2.0274809735513526,
+      "hotspot_linearity": 1.0019978043782574
+    },
+    {
+      "set": "level4",
+      "i": 1,
+      "factor": 1.1,
+      "rise_hotspot_K": 40.41912841796875,
+      "dTmax_surrogate_K": 5.4456787109375,
+      "dTmax_hotspot_K": 4.040008544921875,
+      "gain_vs_hotspot": 1.347937423989485,
+      "hotspot_linearity": 0.9995288624595485
+    },
+    {
+      "set": "level4",
+      "i": 2,
+      "factor": 0.9,
+      "rise_hotspot_K": 18.670196533203125,
+      "dTmax_surrogate_K": -2.0081787109375,
+      "dTmax_hotspot_K": -1.8599853515625,
+      "gain_vs_hotspot": 1.0796744766030058,
+      "hotspot_linearity": 0.9962323365234521
+    },
+    {
+      "set": "level4",
+      "i": 2,
+      "factor": 1.1,
+      "rise_hotspot_K": 18.670196533203125,
+      "dTmax_surrogate_K": 4.566009521484375,
+      "dTmax_hotspot_K": 1.870025634765625,
+      "gain_vs_hotspot": 2.441682850008976,
+      "hotspot_linearity": 1.0016100427437735
+    },
+    {
+      "set": "level4",
+      "i": 3,
+      "factor": 0.9,
+      "rise_hotspot_K": 60.811981201171875,
+      "dTmax_surrogate_K": -4.781280517578125,
+      "dTmax_hotspot_K": -6.079986572265625,
+      "gain_vs_hotspot": 0.7863965587339192,
+      "hotspot_linearity": 0.999800771521067
+    },
+    {
+      "set": "level4",
+      "i": 3,
+      "factor": 1.1,
+      "rise_hotspot_K": 60.811981201171875,
+      "dTmax_surrogate_K": 4.8157958984375,
+      "dTmax_hotspot_K": 6.08001708984375,
+      "gain_vs_hotspot": 0.7920694674496813,
+      "hotspot_linearity": 0.9998057898706612
+    },
+    {
+      "set": "level4",
+      "i": 4,
+      "factor": 0.9,
+      "rise_hotspot_K": 30.713623046875,
+      "dTmax_surrogate_K": -4.2022705078125,
+      "dTmax_hotspot_K": -3.07000732421875,
+      "gain_vs_hotspot": 1.3688144893536651,
+      "hotspot_linearity": 0.9995588340500626
+    },
+    {
+      "set": "level4",
+      "i": 4,
+      "factor": 1.1,
+      "rise_hotspot_K": 30.713623046875,
+      "dTmax_surrogate_K": 5.567901611328125,
+      "dTmax_hotspot_K": 3.079986572265625,
+      "gain_vs_hotspot": 1.8077681446618776,
+      "hotspot_linearity": 1.0028079616543315
+    },
+    {
+      "set": "level4",
+      "i": 5,
+      "factor": 0.9,
+      "rise_hotspot_K": 21.65777587890625,
+      "dTmax_surrogate_K": -4.31866455078125,
+      "dTmax_hotspot_K": -2.16998291015625,
+      "gain_vs_hotspot": 1.9901836694512418,
+      "hotspot_linearity": 1.0019417147398415
+    },
+    {
+      "set": "level4",
+      "i": 5,
+      "factor": 1.1,
+      "rise_hotspot_K": 21.65777587890625,
+      "dTmax_surrogate_K": 3.345611572265625,
+      "dTmax_hotspot_K": 2.160003662109375,
+      "gain_vs_hotspot": 1.5488916203958802,
+      "hotspot_linearity": 0.9973340172077061
+    },
+    {
+      "set": "level4",
+      "i": 6,
+      "factor": 0.9,
+      "rise_hotspot_K": 36.576751708984375,
+      "dTmax_surrogate_K": -3.5921630859375,
+      "dTmax_hotspot_K": -3.660003662109375,
+      "gain_vs_hotspot": 0.9814643419966481,
+      "hotspot_linearity": 1.0006366041548644
+    },
+    {
+      "set": "level4",
+      "i": 6,
+      "factor": 1.1,
+      "rise_hotspot_K": 36.576751708984375,
+      "dTmax_surrogate_K": 5.93701171875,
+      "dTmax_hotspot_K": 3.649993896484375,
+      "gain_vs_hotspot": 1.6265812730449904,
+      "hotspot_linearity": 0.9978999571981731
+    },
+    {
+      "set": "level4",
+      "i": 7,
+      "factor": 0.9,
+      "rise_hotspot_K": 19.78826904296875,
+      "dTmax_surrogate_K": -2.557891845703125,
+      "dTmax_hotspot_K": -1.97998046875,
+      "gain_vs_hotspot": 1.2918773119605425,
+      "hotspot_linearity": 1.0005829536937367
+    },
+    {
+      "set": "level4",
+      "i": 7,
+      "factor": 1.1,
+      "rise_hotspot_K": 19.78826904296875,
+      "dTmax_surrogate_K": 4.404052734375,
+      "dTmax_hotspot_K": 1.980010986328125,
+      "gain_vs_hotspot": 2.2242567161418596,
+      "hotspot_linearity": 1.0005983757491255
+    },
+    {
+      "set": "level4",
+      "i": 8,
+      "factor": 0.9,
+      "rise_hotspot_K": 51.522216796875,
+      "dTmax_surrogate_K": -11.487945556640625,
+      "dTmax_hotspot_K": -5.149993896484375,
+      "gain_vs_hotspot": 2.2306716838019613,
+      "hotspot_linearity": 0.9995676072689366
+    },
+    {
+      "set": "level4",
+      "i": 8,
+      "factor": 1.1,
+      "rise_hotspot_K": 51.522216796875,
+      "dTmax_surrogate_K": 8.2257080078125,
+      "dTmax_hotspot_K": 5.149993896484375,
+      "gain_vs_hotspot": 1.5972267488370715,
+      "hotspot_linearity": 0.9995676072689356
+    },
+    {
+      "set": "level4",
+      "i": 9,
+      "factor": 0.9,
+      "rise_hotspot_K": 46.83795166015625,
+      "dTmax_surrogate_K": -8.6024169921875,
+      "dTmax_hotspot_K": -4.680023193359375,
+      "gain_vs_hotspot": 1.8381141795181115,
+      "hotspot_linearity": 0.9991946760004328
+    },
+    {
+      "set": "level4",
+      "i": 9,
+      "factor": 1.1,
+      "rise_hotspot_K": 46.83795166015625,
+      "dTmax_surrogate_K": 7.4893798828125,
+      "dTmax_hotspot_K": 4.67999267578125,
+      "gain_vs_hotspot": 1.600297351226574,
+      "hotspot_linearity": 0.9991881604340923
+    },
+    {
+      "set": "level5",
+      "i": 0,
+      "factor": 0.9,
+      "rise_hotspot_K": 9.511016845703125,
+      "dTmax_surrogate_K": 0.01715087890625,
+      "dTmax_hotspot_K": -0.949981689453125,
+      "gain_vs_hotspot": -0.01805390471907225,
+      "hotspot_linearity": 0.9988224233692812
+    },
+    {
+      "set": "level5",
+      "i": 0,
+      "factor": 1.1,
+      "rise_hotspot_K": 9.511016845703125,
+      "dTmax_surrogate_K": 0.460205078125,
+      "dTmax_hotspot_K": 0.95001220703125,
+      "gain_vs_hotspot": 0.4844201734661099,
+      "hotspot_linearity": 0.9988545099259755
+    },
+    {
+      "set": "level5",
+      "i": 1,
+      "factor": 0.9,
+      "rise_hotspot_K": 10.9527587890625,
+      "dTmax_surrogate_K": -0.247406005859375,
+      "dTmax_hotspot_K": -1.089996337890625,
+      "gain_vs_hotspot": 0.22697874961502926,
+      "hotspot_linearity": 0.9951797157982727
+    },
+    {
+      "set": "level5",
+      "i": 1,
+      "factor": 1.1,
+      "rise_hotspot_K": 10.9527587890625,
+      "dTmax_surrogate_K": 0.2210693359375,
+      "dTmax_hotspot_K": 1.0999755859375,
+      "gain_vs_hotspot": 0.20097658417489736,
+      "hotspot_linearity": 1.0042908888269706
+    },
+    {
+      "set": "level5",
+      "i": 2,
+      "factor": 0.9,
+      "rise_hotspot_K": 22.572998046875,
+      "dTmax_surrogate_K": -0.506072998046875,
+      "dTmax_hotspot_K": -2.25,
+      "gain_vs_hotspot": 0.2249213324652778,
+      "hotspot_linearity": 0.9967661341783928
+    },
+    {
+      "set": "level5",
+      "i": 2,
+      "factor": 1.1,
+      "rise_hotspot_K": 22.572998046875,
+      "dTmax_surrogate_K": 0.86260986328125,
+      "dTmax_hotspot_K": 2.259979248046875,
+      "gain_vs_hotspot": 0.38168928499088517,
+      "hotspot_linearity": 1.0011870126218099
+    },
+    {
+      "set": "level5",
+      "i": 3,
+      "factor": 0.9,
+      "rise_hotspot_K": 14.732666015625,
+      "dTmax_surrogate_K": -0.147613525390625,
+      "dTmax_hotspot_K": -1.470001220703125,
+      "gain_vs_hotspot": 0.10041728082376632,
+      "hotspot_linearity": 0.9977835777612065
+    },
+    {
+      "set": "level5",
+      "i": 3,
+      "factor": 1.1,
+      "rise_hotspot_K": 14.732666015625,
+      "dTmax_surrogate_K": 0.06378173828125,
+      "dTmax_hotspot_K": 1.480010986328125,
+      "gain_vs_hotspot": 0.043095449203043486,
+      "hotspot_linearity": 1.0045778440633018
+    },
+    {
+      "set": "level5",
+      "i": 4,
+      "factor": 0.9,
+      "rise_hotspot_K": 13.329345703125,
+      "dTmax_surrogate_K": -0.44525146484375,
+      "dTmax_hotspot_K": -1.329986572265625,
+      "gain_vs_hotspot": 0.3347789174181409,
+      "hotspot_linearity": 0.9977883400186826
+    },
+    {
+      "set": "level5",
+      "i": 4,
+      "factor": 1.1,
+      "rise_hotspot_K": 13.329345703125,
+      "dTmax_surrogate_K": 0.54547119140625,
+      "dTmax_hotspot_K": 1.33001708984375,
+      "gain_vs_hotspot": 0.4101234454591345,
+      "hotspot_linearity": 0.9978112350495438
+    },
+    {
+      "set": "level5",
+      "i": 5,
+      "factor": 0.9,
+      "rise_hotspot_K": 15.151031494140625,
+      "dTmax_surrogate_K": -0.50885009765625,
+      "dTmax_hotspot_K": -1.519989013671875,
+      "gain_vs_hotspot": 0.3347722207721806,
+      "hotspot_linearity": 1.0032247733493938
+    },
+    {
+      "set": "level5",
+      "i": 5,
+      "factor": 1.1,
+      "rise_hotspot_K": 15.151031494140625,
+      "dTmax_surrogate_K": 0.927947998046875,
+      "dTmax_hotspot_K": 1.510009765625,
+      "gain_vs_hotspot": 0.6145311236863379,
+      "hotspot_linearity": 0.9966382593877957
+    },
+    {
+      "set": "level5",
+      "i": 6,
+      "factor": 0.9,
+      "rise_hotspot_K": 12.093017578125,
+      "dTmax_surrogate_K": -0.684661865234375,
+      "dTmax_hotspot_K": -1.209991455078125,
+      "gain_vs_hotspot": 0.5658402481777598,
+      "hotspot_linearity": 1.0005703268528054
+    },
+    {
+      "set": "level5",
+      "i": 6,
+      "factor": 1.1,
+      "rise_hotspot_K": 12.093017578125,
+      "dTmax_surrogate_K": 0.86785888671875,
+      "dTmax_hotspot_K": 1.21002197265625,
+      "gain_vs_hotspot": 0.7172257250945776,
+      "hotspot_linearity": 1.0005955625542557
+    },
+    {
+      "set": "level5",
+      "i": 7,
+      "factor": 0.9,
+      "rise_hotspot_K": 16.567626953125,
+      "dTmax_surrogate_K": -0.359375,
+      "dTmax_hotspot_K": -1.660003662109375,
+      "gain_vs_hotspot": 0.2164904862579281,
+      "hotspot_linearity": 1.0019562045946864
+    },
+    {
+      "set": "level5",
+      "i": 7,
+      "factor": 1.1,
+      "rise_hotspot_K": 16.567626953125,
+      "dTmax_surrogate_K": 0.220306396484375,
+      "dTmax_hotspot_K": 1.6500244140625,
+      "gain_vs_hotspot": 0.1335170526004291,
+      "hotspot_linearity": 0.9959328627635894
+    },
+    {
+      "set": "level5",
+      "i": 8,
+      "factor": 0.9,
+      "rise_hotspot_K": 17.318206787109375,
+      "dTmax_surrogate_K": -0.207855224609375,
+      "dTmax_hotspot_K": -1.739990234375,
+      "gain_vs_hotspot": 0.11945769608530939,
+      "hotspot_linearity": 1.0047173219285865
+    },
+    {
+      "set": "level5",
+      "i": 8,
+      "factor": 1.1,
+      "rise_hotspot_K": 17.318206787109375,
+      "dTmax_surrogate_K": 0.21673583984375,
+      "dTmax_hotspot_K": 1.730010986328125,
+      "gain_vs_hotspot": 0.12528003669142163,
+      "hotspot_linearity": 0.9989550347763712
+    },
+    {
+      "set": "level5",
+      "i": 9,
+      "factor": 0.9,
+      "rise_hotspot_K": 17.162841796875,
+      "dTmax_surrogate_K": -0.623626708984375,
+      "dTmax_hotspot_K": -1.720001220703125,
+      "gain_vs_hotspot": 0.36257341069179044,
+      "hotspot_linearity": 1.0021657491571716
+    },
+    {
+      "set": "level5",
+      "i": 9,
+      "factor": 1.1,
+      "rise_hotspot_K": 17.162841796875,
+      "dTmax_surrogate_K": 0.677215576171875,
+      "dTmax_hotspot_K": 1.720001220703125,
+      "gain_vs_hotspot": 0.3937297067120881,
+      "hotspot_linearity": 1.0021657491571707
+    }
+  ],
+  "model": "models_v1.2_poweraug/model.onnx"
+}

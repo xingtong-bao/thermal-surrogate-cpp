@@ -1,0 +1,128 @@
+{
+  "model_version": "level4-unet-poweraug-1.2.0",
+  "schema_version": "1.0.0",
+  "source": {
+    "benchmark": "IC-ThermBench (CC BY 4.0)",
+    "checkpoint": "external/thermbench_data/level4_UNet_poweraug/model.pt (tools/finetune_power_aug.py)",
+    "checkpoint_sha256": "7590dc15f95088a5a5456b0b98b0715707dd47b30276701115655a86e02b51fb",
+    "training_data": "level4_steady (S4), split per contract/stats.json",
+    "architecture": "UNet in=7 out=1 channels (58,116,232,348), 5,062,125 parameters",
+    "augmentation": {
+      "n_train": 10800,
+      "epochs": 12,
+      "lr": 0.0001,
+      "f_range": [
+        0.7,
+        1.3
+      ],
+      "device": "mps",
+      "finetune_time_s": 1763.4614810943604,
+      "before": {
+        "eval50_mae_K": 1.0509601086378098,
+        "power_gain": {
+          "x0.9": 0.12305026841919088,
+          "x1.1": 0.08684180409892635
+        }
+      },
+      "after": {
+        "eval50_mae_K": 1.4600934314727783,
+        "power_gain": {
+          "x0.9": 0.8987928788237379,
+          "x1.1": 0.9280779703927685
+        }
+      }
+    }
+  },
+  "export": {
+    "tool": "tools/export_onnx.py",
+    "torch": "2.0.1",
+    "onnx": "1.23.2",
+    "onnxruntime": "1.23.2",
+    "opset": 17,
+    "date": "2026-10-18"
+  },
+  "io": {
+    "input": {
+      "name": "input",
+      "shape": [
+        1,
+        64,
+        64,
+        1,
+        7
+      ],
+      "axes": [
+        "B",
+        "X",
+        "Y",
+        "Z",
+        "P"
+      ],
+      "dtype": "float32",
+      "layout": "C-contiguous, physical units as in contract section 2"
+    },
+    "output": {
+      "name": "field",
+      "shape": [
+        1,
+        64,
+        64,
+        1
+      ],
+      "axes": [
+        "B",
+        "X",
+        "Y",
+        "Z"
+      ],
+      "dtype": "float32",
+      "unit": "K"
+    }
+  },
+  "normalization": {
+    "baked_into_graph": true,
+    "note": "The graph normalizes its input and de-normalizes its output; the client passes physical values. Constants are listed for inspection and must equal contract/stats.json checkpoint_normalizer.",
+    "channels": [
+      "chiplet_power",
+      "grid_x",
+      "grid_y",
+      "local_thermal_k",
+      "ambient_K",
+      "h_w_m2k",
+      "r_convec_k_per_w"
+    ],
+    "x_mean": [
+      45.003807067871094,
+      22.049999237060547,
+      21.899999618530273,
+      49.80644226074219,
+      313.2140197753906,
+      5318.1201171875,
+      0.02211057022213936
+    ],
+    "x_std": [
+      85.82110595703125,
+      14.343846321105957,
+      14.728928565979004,
+      49.249725341796875,
+      8.662182807922363,
+      5113.349609375,
+      0.02954956702888012
+    ],
+    "y_mean": 356.2989501953125,
+    "y_std": 29.173845291137695
+  },
+  "files": {
+    "model.onnx": {
+      "size_bytes": 20257836,
+      "sha256": "8018aef6998db2f27e113dd34ce1f71e30626ff4551052a8670c6d6e3010895d",
+      "max_abs_diff_vs_torch_K": 3.0517578125e-05,
+      "dynamic_axes": false,
+      "layout": "contract (B,X,Y,Z,P)",
+      "ir_version": 8,
+      "opset": 17,
+      "node_count": 49
+    }
+  },
+  "dynamic_constraints": "model_dynamic.onnx: X and Y must be multiples of 8 (three 2x max-pools); Z must be 1; P must be 7. model_nchw_dynamic.onnx: batch dynamic only, input (B,7,64,64), output (B,1,64,64); S4.5 layout study, not a contract artefact"
+}

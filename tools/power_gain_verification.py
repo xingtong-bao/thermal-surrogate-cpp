@@ -46,9 +46,11 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--n", type=int, default=10, help="samples per set")
     p.add_argument("--factors", default="0.9,1.1")
+    p.add_argument("--model", default=os.path.join(REPO, "models", "model.onnx"))
+    p.add_argument("--out", default=os.path.join(REPO, "docs", "results", "power_gain_verification.json"))
     a = p.parse_args()
     factors = [float(f) for f in a.factors.split(",")]
-    sess = ort.InferenceSession(os.path.join(REPO, "models", "model.onnx"), providers=["CPUExecutionProvider"])
+    sess = ort.InferenceSession(a.model, providers=["CPUExecutionProvider"])
     sets = {"level4": os.path.join(REPO, "tests", "fixtures", "eval50", "level4_inputs.npy"),
             "level5": os.path.join(REPO, "..", "external", "eval_sets", "level5_inputs.npy")}
     rows, summary = [], {}
@@ -76,7 +78,8 @@ def main():
     out = {"method": "HotSpot grid model (tools/reference_cli.py) on the same inputs with chiplet power scaled; "
                      "gain = surrogate dTmax / HotSpot dTmax; HotSpot linearity = dTmax / (df * rise) should be 1",
            "factors": factors, "summary": summary, "rows": rows}
-    with open(os.path.join(REPO, "docs", "results", "power_gain_verification.json"), "w") as f:
+    out["model"] = os.path.basename(os.path.dirname(a.model)) + "/" + os.path.basename(a.model)
+    with open(a.out, "w") as f:
         json.dump(out, f, indent=2)
     print(json.dumps(summary, indent=1))
 
