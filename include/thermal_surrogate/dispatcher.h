@@ -37,6 +37,25 @@ class SurrogateBackend final : public ISolverBackend {
   const Predictor& predictor_;
 };
 
+// Per-prediction error bounds from split conformal prediction (contract/conformal.json).
+// Looked up by the predicted temperature rise (tmax - ambient), which is known
+// after the surrogate answered; group-conditional quantiles tighten the bound
+// for cool designs. See tools/conformal.py for the calibration.
+class ConformalTable {
+ public:
+  ConformalTable() = default;
+  explicit ConformalTable(const std::string& json_path);    // throws on missing/invalid file
+  bool loaded() const { return !bins_.empty(); }
+  // Bounds at the 90 % level for a surrogate answer with the given predicted rise.
+  void bounds(double rise_K, float& mae_bound, float& tmax_bound) const;
+  const std::string& model_version() const { return model_version_; }
+
+ private:
+  struct Bin { double lo, hi, mae_q90, tmax_q90; };
+  std::vector<Bin> bins_;
+  std::string model_version_;
+};
+
 class Dispatcher {
  public:
   // `backends` in trial order. The Validator is shared (read-only, thread-safe).
@@ -55,9 +74,13 @@ class Dispatcher {
 
   std::size_t backend_count() const { return backends_.size(); }
 
+  // Optional: once set, surrogate answers carry mae_bound_90_K / tmax_err_bound_90_K.
+  void set_conformal(ConformalTable table) { conformal_ = std::move(table); }
+
  private:
   const Validator& validator_;
   std::vector<std::unique_ptr<ISolverBackend>> backends_;
+  ConformalTable conformal_;
 };
 
 }  // namespace thermal_surrogate

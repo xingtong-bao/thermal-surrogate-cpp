@@ -251,6 +251,16 @@
         },
         "status": {
           "$ref": "#/$defs/status"
+        },
+        "mae_bound_90_K": {
+          "type": "number",
+          "minimum": 0,
+          "description": "split-conformal 90 % bound on the field MAE of a surrogate answer (K); 0 for reference answers (S8.2)"
+        },
+        "tmax_err_bound_90_K": {
+          "type": "number",
+          "minimum": 0,
+          "description": "split-conformal 90 % bound on |Tmax error| of a surrogate answer (K); 0 for reference answers (S8.2)"
         }
       },
       "allOf": [

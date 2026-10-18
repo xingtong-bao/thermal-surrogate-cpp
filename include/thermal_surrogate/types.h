@@ -83,6 +83,12 @@ struct Output {
   Source source = Source::None;          // which backend produced `field`
   double latency_ms = 0.0;               // wall time of the backend call
   std::string model_version;             // models/metadata.json -> model_version (surrogate only)
+  // Conformal error bounds (contract section 3, S8.2): with probability 0.9 the
+  // field MAE / |Tmax error| of a surrogate answer on an in-support input is
+  // below these values. 0 when no table is loaded or the answer is not from
+  // the surrogate. Calibrated on the validation split, see contract/conformal.json.
+  float mae_bound_90_K = 0.0f;
+  float tmax_err_bound_90_K = 0.0f;
   Status status;
 };
 

@@ -25,6 +25,8 @@ struct ts_engine {
     chain.push_back(std::make_unique<ts::SurrogateBackend>(predictor));
     chain.push_back(std::make_unique<ts::FdSolverBackend>(ts::load_fd_params(models + "/fd_solver_params.json")));
     dispatcher = std::make_unique<ts::Dispatcher>(validator, std::move(chain));
+    // Error bounds are optional: an engine without the table still works.
+    try { dispatcher->set_conformal(ts::ConformalTable(contract + "/conformal.json")); } catch (const std::exception&) {}
   }
 };
 
@@ -64,6 +66,8 @@ ts_status ts_predict(const ts_engine* engine, const float* input, float* field, 
     result->source = static_cast<int>(out.source) + (out.source == ts::Source::None ? 0 : 1);   // None=0, Surrogate=1, ...
     if (out.source == ts::Source::None) result->source = TS_SOURCE_NONE;
     result->latency_ms = out.latency_ms;
+    result->mae_bound_90_K = out.mae_bound_90_K;
+    result->tmax_err_bound_90_K = out.tmax_err_bound_90_K;
     copy_str(result->model_version, sizeof result->model_version, out.model_version);
     copy_str(result->message, sizeof result->message, out.status.message);
   }

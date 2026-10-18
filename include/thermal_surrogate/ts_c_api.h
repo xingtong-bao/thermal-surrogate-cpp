@@ -48,6 +48,8 @@ typedef struct ts_result {
   int oob_flag;              /* 1 if I4/I5 fired and a reference answered */
   int source;                /* ts_source */
   double latency_ms;
+  float mae_bound_90_K;      /* conformal 90 % bound on the field MAE (surrogate answers only, else 0) */
+  float tmax_err_bound_90_K; /* same for |Tmax error| */
   char model_version[32];    /* empty unless source == surrogate */
   char message[160];         /* status detail, empty on TS_OK */
 } ts_result;

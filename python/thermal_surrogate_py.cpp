@@ -30,6 +30,7 @@ class Engine {
     chain.push_back(std::make_unique<ts::SurrogateBackend>(predictor_));
     chain.push_back(std::make_unique<ts::FdSolverBackend>(ts::load_fd_params(models + "/fd_solver_params.json")));
     dispatcher_ = std::make_unique<ts::Dispatcher>(validator_, std::move(chain));
+    try { dispatcher_->set_conformal(ts::ConformalTable(contract + "/conformal.json")); } catch (const std::exception&) {}
   }
 
   py::dict predict(py::array_t<float, py::array::c_style | py::array::forcecast> x) {
@@ -49,6 +50,8 @@ class Engine {
     d["oob_flag"] = out.oob_flag;
     d["oob_channels"] = out.oob_channels;
     d["latency_ms"] = out.latency_ms;
+    d["mae_bound_90_K"] = out.mae_bound_90_K;
+    d["tmax_err_bound_90_K"] = out.tmax_err_bound_90_K;
     d["model_version"] = out.model_version;
     if (out.status.ok()) {
       py::array_t<float> field({static_cast<py::ssize_t>(ts::kX), static_cast<py::ssize_t>(ts::kY), static_cast<py::ssize_t>(ts::kZ)});

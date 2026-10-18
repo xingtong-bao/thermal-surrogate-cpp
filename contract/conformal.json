@@ -1,0 +1,65 @@
+{
+  "method": "split conformal prediction; scores = per-sample field MAE and |Tmax error| (K); finite-sample quantile ceil((n+1)(1-alpha))/n; group-conditional on predicted rise = tmax_pred - ambient",
+  "calibration_set": "level4 validation split (1200 samples; never the test split)",
+  "model_version": "level4-unet-1.0.0",
+  "levels": [
+    0.9,
+    0.95
+  ],
+  "n_calibration": 1200,
+  "overall": {
+    "mae_q90_K": 2.8560097739100456,
+    "tmax_err_q90_K": 2.486907958984375,
+    "mae_q95_K": 3.3104699105024338,
+    "tmax_err_q95_K": 3.319580078125
+  },
+  "rise_bins": [
+    {
+      "rise_lo_K": null,
+      "rise_hi_K": 34.76483154296875,
+      "n": 240,
+      "mae_q90_K": 1.6213847920298576,
+      "tmax_err_q90_K": 1.393280029296875,
+      "mae_q95_K": 1.7255368754267693,
+      "tmax_err_q95_K": 1.79486083984375
+    },
+    {
+      "rise_lo_K": 34.76483154296875,
+      "rise_hi_K": 48.28370361328125,
+      "n": 240,
+      "mae_q90_K": 2.353579208254814,
+      "tmax_err_q90_K": 2.084564208984375,
+      "mae_q95_K": 2.7906408607959747,
+      "tmax_err_q95_K": 2.72900390625
+    },
+    {
+      "rise_lo_K": 48.28370361328125,
+      "rise_hi_K": 63.105358886718754,
+      "n": 240,
+      "mae_q90_K": 2.6374457255005836,
+      "tmax_err_q90_K": 2.46978759765625,
+      "mae_q95_K": 3.0421101972460747,
+      "tmax_err_q95_K": 2.92437744140625
+    },
+    {
+      "rise_lo_K": 63.105358886718754,
+      "rise_hi_K": 88.04136352539062,
+      "n": 240,
+      "mae_q90_K": 2.897644132375717,
+      "tmax_err_q90_K": 2.720947265625,
+      "mae_q95_K": 3.319225437939167,
+      "tmax_err_q95_K": 3.814483642578125
+    },
+    {
+      "rise_lo_K": 88.04136352539062,
+      "rise_hi_K": null,
+      "n": 240,
+      "mae_q90_K": 3.687917396426201,
+      "tmax_err_q90_K": 3.649383544921875,
+      "mae_q95_K": 4.569279201328754,
+      "tmax_err_q95_K": 4.69561767578125
+    }
+  ],
+  "applies_to": "inputs that pass rules I1-I5 (exchangeable with the calibration set); undefined for OOD inputs",
+  "validation_mae_mean_K": 1.7704372416436671
+}

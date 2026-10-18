@@ -88,6 +88,14 @@ Assertions checked before inference (any failure is a hard reject, see §5):
 | `model_version` | string              | from `models/metadata.json`; `""` when `source != surrogate` |
 | `status`        | `Status{code, message}` | see §6                                                |
 
+Error bounds (added S8.2): for a surrogate answer on an input that passed I1–I5,
+`mae_bound_90_K` and `tmax_err_bound_90_K` are split-conformal 90 % bounds on the field
+MAE and |Tmax error| of that answer, calibrated on the level4 validation split (1 200
+samples) and conditioned on the predicted temperature rise (`contract/conformal.json`).
+Measured coverage on the 50-sample test subset is asserted ≥ 0.85 by `Conformal.*`.
+They are 0 for reference answers and for OOD inputs: the guarantee needs the input to be
+exchangeable with the calibration set, which is what I4/I5 enforce.
+
 Assertions on output: `O1` `field` contains no NaN/Inf; `O2` `tmax == max(field)`;
 `O3` when `source == surrogate`, `model_version` equals the loaded metadata version.
 
