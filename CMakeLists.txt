@@ -21,6 +21,12 @@ endif()
 
 option(TS_BUILD_TESTS "Build the GoogleTest suite" ON)
 option(TS_WARNINGS_AS_ERRORS "Treat warnings as errors" ON)
+set(TS_SANITIZE "" CACHE STRING "Sanitizer to enable for all targets: thread | address | (empty)")
+if(TS_SANITIZE)
+  # Applied globally so the library, the runtime shim and the tests agree.
+  add_compile_options(-fsanitize=${TS_SANITIZE} -g -O1 -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=${TS_SANITIZE})
+endif()
 
 include(cmake/onnxruntime.cmake)
 include(cmake/json.cmake)
@@ -74,13 +80,14 @@ target_link_libraries(c_caller PRIVATE thermal_surrogate onnxruntime::onnxruntim
 if(TS_BUILD_TESTS)
   include(cmake/googletest.cmake)
   enable_testing()
-  add_executable(ts_tests tests/test_skeleton.cpp tests/test_predictor.cpp tests/test_validator.cpp tests/test_dispatcher.cpp tests/test_fd_solver.cpp tests/test_external_backend.cpp)
+  add_executable(ts_tests tests/test_skeleton.cpp tests/test_predictor.cpp tests/test_validator.cpp tests/test_dispatcher.cpp tests/test_fd_solver.cpp tests/test_external_backend.cpp tests/test_concurrency.cpp tests/test_accuracy_gate.cpp)
   target_link_libraries(ts_tests PRIVATE thermal_surrogate onnxruntime::onnxruntime nlohmann_json::nlohmann_json GTest::gtest_main)
   target_compile_definitions(ts_tests PRIVATE
     TS_MODEL_PATH="${TS_MODEL_PATH}"
     TS_FIXTURE_DIR="${TS_FIXTURE_DIR}"
     TS_CONTRACT_DIR="${TS_CONTRACT_DIR}"
-    TS_MODELS_DIR="${TS_MODELS_DIR}")
+    TS_MODELS_DIR="${TS_MODELS_DIR}"
+    TS_REPO_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
   set_target_properties(ts_tests PROPERTIES BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}")
   include(GoogleTest)
   gtest_discover_tests(ts_tests)

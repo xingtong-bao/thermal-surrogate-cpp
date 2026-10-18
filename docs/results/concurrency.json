@@ -1,0 +1,10 @@
+{
+  "test": "tests/test_concurrency.cpp Concurrency.EightThreadsBitIdentical",
+  "setup": "one Predictor (one ONNX Runtime session, intra_op_threads = 1), 8 caller threads x 100 predict_into() calls, inputs cycling through the 10 parity fixtures",
+  "assertion": "every result equals the single-threaded result for the same input, compared with memcmp (bit-identical); no call fails",
+  "result": {"threads": 8, "predictions_per_thread": 100, "total_predictions": 800, "failures": 0, "mismatches": 0, "wall_time_s_release": 15.7},
+  "thread_sanitizer": {"build": "cmake -DTS_SANITIZE=thread -DCMAKE_BUILD_TYPE=RelWithDebInfo (build-tsan/)", "filter": "Concurrency.*:Predictor.*:Fixture.*",
+                        "tests_run": 12, "tests_passed": 12, "tsan_warnings": 0, "wall_time_s_concurrency_test": 16.0},
+  "machine": {"cpu": "Apple M4", "os": "macOS", "compiler": "Apple clang 21", "onnxruntime": "1.23.2"},
+  "note": "ONNX Runtime documents Session::Run as thread-safe; this run is the project's own evidence for the integration rule 'one session, many caller threads' in docs/integration_design.md."
+}
