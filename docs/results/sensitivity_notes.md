@@ -79,3 +79,23 @@ h_w_m2k > local_thermal_k > chiplet_power.
 
 ambient_K, r_convec_k_per_w, grid_y (by field MAD). The more important finding
 for the failure analysis is the *missing* sensitivity to chiplet_power.
+
+## Solver verification (S8.1)
+
+The "expected" response above came from the linearity of the heat
+equation. `tools/power_gain_verification.py` repeats the ±10 % power
+experiment with HotSpot on the same inputs (10 seen + 10 unseen chips,
+`power_gain_verification.json`). HotSpot itself is linear to 0.2 %
+(dTmax / (0.1 × rise) = 1.000 ± 0.002), which validates the method. The
+surrogate's hotspot response relative to HotSpot's:
+
+| set | gain median | range over samples |
+|---|---|---|
+| level4 (seen chips) | 0.28 | −0.12 … 0.70 |
+| level5 (unseen chips) | 0.08 | −0.41 … 0.44 |
+
+The ratio is higher than the analytic 0.1 because HotSpot's package is
+more conductive than the generator's (smaller rise in the denominator,
+S5.3), but the conclusion stands and is now solver-backed: the surrogate
+reproduces between a tenth and a third of the true power response, with the
+wrong sign on some samples. Power what-if questions must go to the solver.
