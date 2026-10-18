@@ -1,0 +1,46 @@
+# CI: build the library and run every test that needs no large dataset.
+# The ONNX exports (20 MB each, gitignored) come from the models-v1 release
+# of this repository; ONNX Runtime comes from Microsoft's prebuilt package,
+# hash-pinned in cmake/onnxruntime.cmake. The accuracy gate runs too: its
+# 50-sample subset is committed (tests/fixtures/eval50). HotSpot and the
+# benchmarks are not part of CI.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exported models from the models-v1 release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download models-v1 --repo "$GITHUB_REPOSITORY" --dir models --pattern 'model.onnx' --pattern 'model_dynamic.onnx'
+          python3 - <<'PY'
+          import hashlib, json
+          m = json.load(open("models/metadata.json"))
+          for name in ("model.onnx", "model_dynamic.onnx"):
+              h = hashlib.sha256(open(f"models/{name}", "rb").read()).hexdigest()
+              assert h == m["files"][name]["sha256"], f"{name}: {h} != metadata"
+              print(name, "sha256 ok")
+          PY
+      - name: Cache the ONNX Runtime package
+        uses: actions/cache@v4
+        with:
+          path: build/_deps/onnxruntime_prebuilt-subbuild/onnxruntime_prebuilt-populate-prefix/src
+          key: ort-1.23.2-linux-x64
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DTS_BUILD_BENCH=OFF
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Python contract checks
+        run: |
+          python3 -m pip install -q jsonschema
+          python3 tools/check_schema.py
