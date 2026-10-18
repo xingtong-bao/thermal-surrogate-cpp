@@ -54,3 +54,29 @@ A smaller run (2 000 samples, 8 epochs, 4 min) already moved the gain to
   accuracy on the static designs. Whether that trade is worth taking is a
   product decision; a lower learning rate or a loss term on the hotspot are
   the obvious next experiments, runnable with the same scripts.
+
+## Second attempt: hotspot-weighted loss and a lower learning rate (v1.3)
+
+Same augmentation, learning rate halved (5e-5), and the loss weight of the
+64 hottest true cells of every sample raised 5× (`--hotspot-weight 4
+--hotspot-topk 64`), 12 epochs, 32 min (`models_v1.2_poweraug_hot/`,
+`power_aug_lifecycle_poweraug_hot.json`).
+
+| | v1.2 (plain) | v1.3 (hotspot-weighted, lr/2) |
+|---|---|---|
+| power gain, analytic (×0.9 / ×1.1) | 0.90 / 0.93 | 0.85 / 0.90 |
+| seen chips MAE / gate 2.012 | 1.46 K | 1.55 K |
+| seen chips worst-5 % / gate 3.792 | 1.98 K | 1.99 K |
+| seen chips Tmax median / gate 0.952 | 1.13 K | **1.36 K (worse)** |
+| unseen chips MAE | 13.0 K | 12.2 K |
+
+Weighting the hottest cells did not move the hotspot gate the right way;
+it slightly hurt everything on the seen chips while the gain stayed. The
+likely reason: the augmented targets scale the *whole* rise, so a loss
+focused on the top cells of each scaled sample rewards fitting the scaling
+law at the hotspot rather than the unscaled hotspot the gate measures.
+Recorded as a negative result. Untried and cheap: a narrower scaling range
+(0.85–1.15), fewer epochs with early stopping on the Tmax metric, or
+freezing the encoder. Either way the trade-off remains explicit: what-if
+correctness versus ~0.2–0.4 K of static hotspot accuracy, and the gate
+decides, not a preference.

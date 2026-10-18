@@ -44,6 +44,9 @@ def main():
     p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--device", default="cpu")
     p.add_argument("--f-range", default="0.7,1.3")
+    p.add_argument("--hotspot-weight", type=float, default=0.0,
+                   help="extra loss weight on the hottest cells: w = 1 + W * [cell in the true top-k]; 0 = plain MSE")
+    p.add_argument("--hotspot-topk", type=int, default=64, help="how many of the hottest true cells get the extra weight")
     a = p.parse_args()
     f_lo, f_hi = [float(v) for v in a.f_range.split(",")]
     bench, out = os.path.abspath(a.bench), os.path.abspath(a.out)
@@ -113,7 +116,17 @@ def main():
             xn = x_norm.forward(xb).squeeze(-2).permute(0, 3, 1, 2).to(dev)
             yn = y_norm.forward(yb).squeeze(-1).to(dev)
             opt.zero_grad()
-            loss = F.mse_loss(model(xn).squeeze(1), yn)
+            pred = model(xn).squeeze(1)
+            if a.hotspot_weight > 0:
+                # Hotspot-weighted MSE: the contract's tightest gate is the Tmax error,
+                # so the hottest true cells of every sample count (1 + W) times more.
+                flat = yn.reshape(yn.shape[0], -1)
+                top = flat.topk(a.hotspot_topk, dim=1).indices
+                w = torch.ones_like(flat)
+                w.scatter_(1, top, 1.0 + a.hotspot_weight)
+                loss = (w * (pred.reshape(flat.shape) - flat) ** 2).sum() / w.sum()
+            else:
+                loss = F.mse_loss(pred, yn)
             loss.backward(); opt.step()
             tot += loss.item(); nb += 1
         print(f"[ep {ep}/{a.epochs}] mse {tot / nb:.5f}  ({time.time() - t0:.0f} s)", flush=True)
@@ -122,8 +135,8 @@ def main():
     print(f"[after ] eval50 MAE {after['eval50_mae_K']:.3f} K, power gain {after['power_gain']}  ({ft_time:.0f} s)")
     model.cpu()
     save_checkpoint(os.path.join(out, "model.pt"), model, x_norm, y_norm,
-                    {"finetuned_from": "level4_UNet", "augmentation": f"power scale U({f_lo},{f_hi}), 25% unscaled", "n_train": n, "epochs": a.epochs, "lr": a.lr})
-    json.dump({"n_train": n, "epochs": a.epochs, "lr": a.lr, "f_range": [f_lo, f_hi], "device": dev, "finetune_time_s": ft_time,
+                    {"finetuned_from": "level4_UNet", "augmentation": f"power scale U({f_lo},{f_hi}), 25% unscaled", "n_train": n, "epochs": a.epochs, "lr": a.lr, "hotspot_weight": a.hotspot_weight, "hotspot_topk": a.hotspot_topk})
+    json.dump({"n_train": n, "epochs": a.epochs, "lr": a.lr, "f_range": [f_lo, f_hi], "hotspot_weight": a.hotspot_weight, "hotspot_topk": a.hotspot_topk, "device": dev, "finetune_time_s": ft_time,
                "before": before, "after": after}, open(os.path.join(out, "metrics.json"), "w"), indent=2)
     print("->", out)
 
