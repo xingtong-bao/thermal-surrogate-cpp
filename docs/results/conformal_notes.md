@@ -25,9 +25,9 @@ grows with the rise:
 | overall | 1 200 | 2.86 (95 %: 3.31) | 2.49 (95 %: 3.32) |
 
 Held-out check on the committed 50-sample test subset (`Conformal.CoverageOnEval50`):
-coverage 0.98 for the MAE bound and 0.96 for the Tmax bound (target ≥ 0.90; the
+coverage 1.00 for the MAE bound and 1.00 for the Tmax bound (target ≥ 0.90; the
 test asserts ≥ 0.85 to allow for 50-sample fluctuation). Mean MAE bound on
-that subset 2.3 K against a realised MAE of 1.05 K: the bound is honest but
+that subset 2.71 K against a realised MAE of 1.05 K: the bound is honest but
 not tight, because the validation split contains the hot, dense cases that
 the every-60th subset under-samples.
 
