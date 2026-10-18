@@ -8,14 +8,14 @@ Latencies are per call on the M4, surrogate with ONNX Runtime default threads.
 
 | set | backend | MAE (K) | p95 MAE (K) | Tmax err (K) | median latency | dispatcher chose |
 |---|---|---|---|---|---|---|
-| level4 (seen chips) | surrogate | 1.05 | 1.86 | 0.75 | 22 ms | — |
-| | FD reference (in-process) | 12.77 | 24.3 | 17.2 | 34 ms | — |
-| | HotSpot (external) | 13.37 | 27.4 | 18.5 | 2.7 s | — |
-| | **dispatcher** | **1.05** | 1.86 | 0.75 | 23 ms | surrogate 50/50, fallback 0 % |
-| level5 (unseen chips) | surrogate | 14.82 | 36.9 | 23.5 | 22 ms | — |
-| | FD reference | 17.79 | 35.8 | 15.1 | 41 ms | — |
-| | HotSpot (external) | 3.36 | 7.0 | 3.9 | 2.0 s | — |
-| | **dispatcher** | **3.36** | 7.0 | 3.9 | 2.0 s | external 50/50, fallback 100 % |
+| level4 (seen chips) | surrogate | 1.05 | 1.66 | 0.75 | 22 ms | — |
+| | FD reference (in-process) | 12.77 | 22.2 | 17.2 | 34 ms | — |
+| | HotSpot (external) | 13.37 | 30.3 | 18.5 | 2.7 s | — |
+| | **dispatcher** | **1.05** | 1.66 | 0.75 | 23 ms | surrogate 50/50, fallback 0 % |
+| level5 (unseen chips) | surrogate | 14.82 | 38.8 | 23.5 | 22 ms | — |
+| | FD reference | 17.79 | 54.8 | 15.1 | 41 ms | — |
+| | HotSpot (external) | 3.36 | 8.4 | 3.9 | 2.0 s | — |
+| | **dispatcher** | **3.36** | 8.4 | 3.9 | 2.0 s | external 50/50, fallback 100 % |
 
 ## Reading
 
