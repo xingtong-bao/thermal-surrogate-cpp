@@ -15,6 +15,7 @@
 #include <limits>
 #include <memory>
 #include <vector>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -264,7 +265,11 @@ int cmd_fd_validate(const std::string& inputs, const std::string& truth, std::si
 int cmd_compare(const std::string& label, const std::string& inputs, const std::string& truth, std::size_t n,
                 const std::string& out_csv, std::vector<std::string> external_cmd) {
   const SetView s = load_set(inputs, truth, n);
-  const std::string models = TS_MODELS_DIR, contract = TS_CONTRACT_DIR;
+  // Model/contract directories can be overridden (S8.3 compares model versions).
+  const char* mo = std::getenv("TS_MODELS_DIR_OVERRIDE");
+  const char* co = std::getenv("TS_CONTRACT_DIR_OVERRIDE");
+  const std::string models = mo ? mo : TS_MODELS_DIR, contract = co ? co : TS_CONTRACT_DIR;
+  std::cout << "models: " << models << "  contract: " << contract << "\n";
   ts::Validator validator(contract + "/stats.json", models + "/config_bank.npy");
   ts::Predictor pred(models + "/model.onnx", models + "/metadata.json");
   ts::SurrogateBackend sur(pred);
@@ -280,9 +285,10 @@ int cmd_compare(const std::string& label, const std::string& inputs, const std::
   if (!external_cmd.empty()) chain.push_back(std::make_unique<ts::ExternalReferenceBackend>(eo));
   chain.push_back(std::make_unique<ts::FdSolverBackend>(ts::load_fd_params(models + "/fd_solver_params.json")));
   ts::Dispatcher dispatcher(validator, std::move(chain));
+  try { dispatcher.set_conformal(ts::ConformalTable(contract + "/conformal.json")); } catch (const std::exception&) {}
 
   std::ofstream csv(out_csv);
-  csv << "set,i,backend,status,source,oob_flag,mae_K,tmax_abs_err_K,max_abs_err_K,latency_ms\n";
+  csv << "set,i,backend,status,source,oob_flag,mae_K,tmax_abs_err_K,max_abs_err_K,latency_ms,mae_bound_90_K\n";
   auto score = [&](std::size_t i, const ts::Output& o, double& mae, double& terr, double& mx) {
     mae = terr = mx = std::nan("");
     if (!o.status.ok()) return;
@@ -299,7 +305,7 @@ int cmd_compare(const std::string& label, const std::string& inputs, const std::
     double mae, terr, mx;
     score(i, o, mae, terr, mx);
     csv << label << "," << i << "," << backend << "," << ts::to_string(o.status.code) << "," << ts::to_string(o.source) << ","
-        << (o.oob_flag ? 1 : 0) << "," << mae << "," << terr << "," << mx << "," << o.latency_ms << "\n";
+        << (o.oob_flag ? 1 : 0) << "," << mae << "," << terr << "," << mx << "," << o.latency_ms << "," << o.mae_bound_90_K << "\n";
   };
   for (std::size_t i = 0; i < s.n(); ++i) {
     const ts::Input in{s.in(i), ts::kInputShape};

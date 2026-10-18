@@ -1,0 +1,76 @@
+{
+  "version": "level4-unet-ft-level5-k50-1.1.0",
+  "shots_per_case": 50,
+  "finetune": {
+    "n_finetune": 250,
+    "n_holdout": 2500,
+    "epochs": 50,
+    "lr": 0.0001,
+    "finetune_time_s": 1199.7533960342407,
+    "before": {
+      "mae_K": 17.093908736154436,
+      "mae_p95_K": 56.774794886261205,
+      "tmax_abs_err_mean_K": 28.07831483154297,
+      "per_case_mae_K": {
+        "Case16": 28.04800079038739,
+        "Case17": 11.622907704353333,
+        "Case18": 33.20518934068084,
+        "Case19": 7.456522680774331,
+        "Case20": 5.136923164576292
+      }
+    },
+    "after": {
+      "mae_K": 2.7838775836914778,
+      "mae_p95_K": 6.609736302494997,
+      "tmax_abs_err_mean_K": 4.342690563964844,
+      "per_case_mae_K": {
+        "Case16": 2.8265810290426017,
+        "Case17": 2.690862152740359,
+        "Case18": 4.062355808481574,
+        "Case19": 2.553015037432313,
+        "Case20": 1.786573890760541
+      }
+    }
+  },
+  "parity_max_abs_diff_K": 0.0010986328125,
+  "bank": {
+    "v1.0": 10800,
+    "v1.1": 11050
+  },
+  "conformal_v1.1": {
+    "n_calibration": 2250,
+    "overall": {
+      "mae_q90_K": 4.496171951293945,
+      "tmax_err_q90_K": 9.017578125,
+      "mae_q95_K": 6.114881992340088,
+      "tmax_err_q95_K": 14.058685302734375
+    }
+  },
+  "holdout50_cpp": {
+    "v1.0": {
+      "surrogate_mae_K": 15.751001200000001,
+      "dispatcher_mae_K": 19.6823108,
+      "fallback_rate": 1.0,
+      "dispatcher_sources": {
+        "reference_inprocess": 50
+      }
+    },
+    "v1.1": {
+      "surrogate_mae_K": 2.609355,
+      "dispatcher_mae_K": 3.4671702,
+      "fallback_rate": 0.24,
+      "dispatcher_sources": {
+        "surrogate": 38,
+        "reference_inprocess": 12
+      }
+    }
+  },
+  "note": "dispatcher chain in --compare is surrogate -> FD reference (no HotSpot) so the v1.0 fallback answers come from the FD solver",
+  "level4_eval50_cpp": {
+    "surrogate_mae_K": 5.7934508,
+    "surrogate_mae_p95_K": 11.5896,
+    "gate_field_mae_K": 2.012188324971994,
+    "passes_level4_gate": false,
+    "v1.0_reference_mae_K": 1.05
+  }
+}

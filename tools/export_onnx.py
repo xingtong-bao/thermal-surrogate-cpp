@@ -54,7 +54,10 @@ def parse_cli():
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--bench", required=True)
     p.add_argument("--repo", default=os.path.join(os.path.dirname(__file__), ".."))
-    p.add_argument("--checkpoint", default="checkpoints/level4_UNet/model.pt", help="relative to --bench")
+    p.add_argument("--checkpoint", default="checkpoints/level4_UNet/model.pt", help="relative to --bench, or absolute")
+    p.add_argument("--version", default=None, help="model_version string (default: MODEL_VERSION constant)")
+    p.add_argument("--out-dir", default=None, help="output directory (default: <repo>/models)")
+    p.add_argument("--contract-only", action="store_true", help="export only model.onnx (no dynamic/NCHW variants)")
     return p.parse_args()
 
 
@@ -107,8 +110,9 @@ class ContractWrapper(torch.nn.Module):
 def main():
     cli = parse_cli()
     bench, repo = os.path.abspath(cli.bench), os.path.abspath(cli.repo)
-    models_dir = os.path.join(repo, "models")
+    models_dir = os.path.abspath(cli.out_dir) if cli.out_dir else os.path.join(repo, "models")
     os.makedirs(models_dir, exist_ok=True)
+    version = cli.version or MODEL_VERSION
 
     os.chdir(bench)                              # benchmark imports by bare name
     sys.path.insert(0, bench)
@@ -116,7 +120,11 @@ def main():
     from utils.compat import install
     install()
     from utils.tools import load_checkpoint
-    x_norm, net, y_norm = load_checkpoint(cli.checkpoint)
+    try:
+        x_norm, net, y_norm = load_checkpoint(cli.checkpoint)             # legacy pickled objects
+    except ValueError:                                                   # state_dict format (fine-tuned models)
+        from exp.exp_basic import build_model
+        x_norm, net, y_norm = load_checkpoint(cli.checkpoint, build_model("UNet", 7, 1, 64))
     net.eval()
     wrapper = ContractWrapper(net, x_norm.mean.detach(), x_norm.std.detach(),
                               y_norm.mean.detach(), y_norm.std.detach()).eval()
@@ -150,6 +158,8 @@ def main():
         ("model_dynamic.onnx", wrapper, x, {"input": {0: "batch", 1: "X", 2: "Y"}, "field": {0: "batch", 1: "X", 2: "Y"}}),
         ("model_nchw_dynamic.onnx", nchw, x_nchw, {"input": {0: "batch"}, "field": {0: "batch"}}),
     )
+    if cli.contract_only:
+        variants = variants[:1]
     outputs = {}
     for name, module, example, dyn in variants:
         path = os.path.join(models_dir, name)
@@ -178,7 +188,7 @@ def main():
 
     # ---- metadata.json --------------------------------------------------------------
     meta = {
-        "model_version": MODEL_VERSION,
+        "model_version": version,
         "schema_version": stats["schema_version"],
         "source": {"benchmark": "IC-ThermBench (CC BY 4.0)", "checkpoint": cli.checkpoint,
                    "checkpoint_sha256": sha256(cli.checkpoint), "training_data": "level4_steady (S4), split per contract/stats.json",
@@ -198,7 +208,7 @@ def main():
     }
     with open(os.path.join(models_dir, "metadata.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
-    print("[meta] -> models/metadata.json")
+    print(f"[meta] -> {os.path.relpath(os.path.join(models_dir, 'metadata.json'), repo)}")
 
 
 if __name__ == "__main__":

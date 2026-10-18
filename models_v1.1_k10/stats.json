@@ -1,0 +1,205 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "dataset": "IC-ThermBench level4_steady (S4), CC BY 4.0",
+    "split": "train = first 90 % of the leading 80 % of samples (benchmark default, never shuffled)",
+    "n_train": 10800,
+    "n_val": 1200,
+    "n_test": 3000,
+    "sample_shape": [
+      64,
+      64,
+      1,
+      7
+    ],
+    "axes": [
+      "X",
+      "Y",
+      "Z",
+      "P"
+    ],
+    "generated_by": "tools/export_stats.py"
+  },
+  "channels": [
+    {
+      "index": 0,
+      "name": "chiplet_power",
+      "unit": "W, total power of the chiplet covering the cell (0 outside chiplets); inferred",
+      "min": 0.0,
+      "max": 300.0,
+      "mean": 45.00317152235243,
+      "std": 85.82110566235023,
+      "p1": 0.0,
+      "p99": 300.0,
+      "fraction_of_samples_constant": 0.0,
+      "n_unique_values_in_train": 14,
+      "varies_along": [
+        "X_axis1",
+        "Y_axis2"
+      ]
+    },
+    {
+      "index": 1,
+      "name": "grid_x",
+      "unit": "mm, physical coordinate of the cell (0 at chip edge, uniform spacing per sample); inferred",
+      "min": 0.0,
+      "max": 59.0,
+      "mean": 22.05000000447035,
+      "std": 14.343845957596256,
+      "p1": 0.0,
+      "p99": 55.25396728515625,
+      "fraction_of_samples_constant": 0.0,
+      "n_unique_values_in_train": 538,
+      "varies_along": [
+        "Y_axis2"
+      ]
+    },
+    {
+      "index": 2,
+      "name": "grid_y",
+      "unit": "mm, physical coordinate of the cell (0 at chip edge, uniform spacing per sample); inferred",
+      "min": 0.0,
+      "max": 61.0,
+      "mean": 21.900000017741696,
+      "std": 14.728928221665113,
+      "p1": 0.0,
+      "p99": 57.126983642578125,
+      "fraction_of_samples_constant": 0.0,
+      "n_unique_values_in_train": 569,
+      "varies_along": [
+        "X_axis1"
+      ]
+    },
+    {
+      "index": 3,
+      "name": "local_thermal_k",
+      "unit": "W/(m*K)",
+      "min": 0.20002900063991547,
+      "max": 100.0,
+      "mean": 49.80643379012397,
+      "std": 49.249723951711985,
+      "p1": 0.21368800103664398,
+      "p99": 100.0,
+      "fraction_of_samples_constant": 0.0,
+      "n_unique_values_in_train": 10771,
+      "varies_along": [
+        "X_axis1",
+        "Y_axis2"
+      ]
+    },
+    {
+      "index": 4,
+      "name": "ambient_K",
+      "unit": "K",
+      "min": 298.1506042480469,
+      "max": 328.1414489746094,
+      "mean": 313.21420214335126,
+      "std": 8.662182974377378,
+      "p1": 298.46910400390624,
+      "p99": 327.84153228759556,
+      "fraction_of_samples_constant": 1.0,
+      "n_unique_values_in_train": 10748,
+      "varies_along": []
+    },
+    {
+      "index": 5,
+      "name": "h_w_m2k",
+      "unit": "W/(m^2*K)",
+      "min": 500.0423583984375,
+      "max": 19991.787109375,
+      "mean": 5318.122003394233,
+      "std": 5113.349812790095,
+      "p1": 519.6725122070295,
+      "p99": 19300.620585934346,
+      "fraction_of_samples_constant": 1.0,
+      "n_unique_values_in_train": 10800,
+      "varies_along": []
+    },
+    {
+      "index": 6,
+      "name": "r_convec_k_per_w",
+      "unit": "K/W",
+      "min": 0.0008699999889358878,
+      "max": 0.20807699859142303,
+      "mean": 0.022110551486376036,
+      "std": 0.02954956708560966,
+      "p1": 0.0010989799862727335,
+      "p99": 0.15240380868277936,
+      "fraction_of_samples_constant": 1.0,
+      "n_unique_values_in_train": 9165,
+      "varies_along": []
+    }
+  ],
+  "output": {
+    "name": "temperature_K",
+    "unit": "K",
+    "min": 299.4599914550781,
+    "max": 506.2699890136719,
+    "mean": 356.2989230575882,
+    "std": 29.173845603185804,
+    "p1": 310.55999755859375,
+    "p99": 442.8399963378906
+  },
+  "checkpoint_normalizer": {
+    "description": "per-channel mean/std pickled inside checkpoints/level4_UNet/model.pt; the ONNX/C++ path must normalize with THESE values, not with a recomputation",
+    "x_mean": [
+      45.003807067871094,
+      22.049999237060547,
+      21.899999618530273,
+      49.80644226074219,
+      313.2140197753906,
+      5318.1201171875,
+      0.02211057022213936
+    ],
+    "x_std": [
+      85.82110595703125,
+      14.343846321105957,
+      14.728928565979004,
+      49.249725341796875,
+      8.662182807922363,
+      5113.349609375,
+      0.02954956702888012
+    ],
+    "y_mean": 356.2989501953125,
+    "y_std": 29.173845291137695,
+    "max_relative_difference_vs_train_split": 1.4122039002249424e-05
+  },
+  "oob_scale": 0.0,
+  "notes": [
+    "grid_x varies along loader axis Y (index 2) and grid_y along loader axis X (index 1): the MATLAB source is column-major and names follow its convention. Treat the (X, Y) axis names as labels of a fixed layout, not as geometry.",
+    "chiplet_power is one scalar per chiplet broadcast over its footprint, so the sum over cells is NOT the chip power.",
+    "ambient_K, h_w_m2k and r_convec_k_per_w are constant within a sample (global boundary conditions encoded as maps)."
+  ],
+  "oob_scale_note": "S2b.3: 80 % of level5 lies inside the per-channel training range and still fails the gate by 3-16x, so no margin is justified; the range check is necessary but not sufficient (see layout_novelty).",
+  "layout_novelty": {
+    "description": "Contract rule I5. Score = Euclidean distance, in training-std units, from the configuration vector of the input to the nearest level4 training sample; score > threshold is an OOD condition. Decided in S2b.3 (docs/results/extrapolation_notes.md): rejects 100 % of level5, 1 % of level4 test.",
+    "features": [
+      "chip_x_mm",
+      "chip_y_mm",
+      "n_chiplets",
+      "total_power_W",
+      "max_power_density_W_mm2",
+      "mean_chiplet_area_mm2"
+    ],
+    "train_mean": [
+      44.1,
+      43.8,
+      18.156296296296297,
+      606.1051851851852,
+      1.5097249119038774,
+      116.4453366128424
+    ],
+    "train_std": [
+      10.709341716464541,
+      12.440257232066939,
+      15.183245431663538,
+      361.7043393730035,
+      0.6636126928770958,
+      102.34686122025643
+    ],
+    "threshold": 0.09070630687671422,
+    "threshold_rule": "99th percentile of the level4 test score (1 % false-reject on in-support data)",
+    "bank": "tools/layout_novelty.py computes the 6-vector for all 10 800 training samples; the C++ library ships it as data (S4.3)",
+    "bank_note": "models_v1.1/config_bank.npy = level4 training bank + 50 level5 shots (level4-unet-ft-level5-k10-1.1.0)"
+  }
+}
