@@ -31,7 +31,8 @@ add_library(thermal_surrogate STATIC
   src/version.cpp
   src/model_info.cpp
   src/npy.cpp
-  src/predictor.cpp)
+  src/predictor.cpp
+  src/validator.cpp)
 target_include_directories(thermal_surrogate PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 # ORT is a private implementation detail: callers of the library include only
@@ -49,6 +50,8 @@ target_compile_options(thermal_surrogate PRIVATE
 # copying 20 MB into the build tree.
 set(TS_MODEL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/models/model.onnx")
 set(TS_FIXTURE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures")
+set(TS_CONTRACT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/contract")
+set(TS_MODELS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/models")
 
 # ---- demo ---------------------------------------------------------------------
 add_executable(ts_demo apps/ts_demo.cpp)
@@ -61,11 +64,13 @@ set_target_properties(ts_demo PROPERTIES BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}")
 if(TS_BUILD_TESTS)
   include(cmake/googletest.cmake)
   enable_testing()
-  add_executable(ts_tests tests/test_skeleton.cpp tests/test_predictor.cpp)
-  target_link_libraries(ts_tests PRIVATE thermal_surrogate onnxruntime::onnxruntime GTest::gtest_main)
+  add_executable(ts_tests tests/test_skeleton.cpp tests/test_predictor.cpp tests/test_validator.cpp)
+  target_link_libraries(ts_tests PRIVATE thermal_surrogate onnxruntime::onnxruntime nlohmann_json::nlohmann_json GTest::gtest_main)
   target_compile_definitions(ts_tests PRIVATE
     TS_MODEL_PATH="${TS_MODEL_PATH}"
-    TS_FIXTURE_DIR="${TS_FIXTURE_DIR}")
+    TS_FIXTURE_DIR="${TS_FIXTURE_DIR}"
+    TS_CONTRACT_DIR="${TS_CONTRACT_DIR}"
+    TS_MODELS_DIR="${TS_MODELS_DIR}")
   set_target_properties(ts_tests PROPERTIES BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}")
   include(GoogleTest)
   gtest_discover_tests(ts_tests)
