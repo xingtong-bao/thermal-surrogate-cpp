@@ -10,7 +10,7 @@
 #   cmake --build build
 #   ctest --test-dir build --output-on-failure
 cmake_minimum_required(VERSION 3.24)
-project(thermal_surrogate VERSION 0.1.0 LANGUAGES CXX)
+project(thermal_surrogate VERSION 0.1.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,7 +35,8 @@ add_library(thermal_surrogate STATIC
   src/validator.cpp
   src/dispatcher.cpp
   src/fd_solver.cpp
-  src/external_backend.cpp)
+  src/external_backend.cpp
+  src/c_api.cpp)
 target_include_directories(thermal_surrogate PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 # ORT is a private implementation detail: callers of the library include only
@@ -59,9 +60,15 @@ set(TS_MODELS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/models")
 # ---- demo ---------------------------------------------------------------------
 add_executable(ts_demo apps/ts_demo.cpp)
 target_link_libraries(ts_demo PRIVATE thermal_surrogate onnxruntime::onnxruntime nlohmann_json::nlohmann_json)
-target_compile_definitions(ts_demo PRIVATE TS_DEFAULT_MODEL_PATH="${TS_MODEL_PATH}" TS_FIXTURE_DIR="${TS_FIXTURE_DIR}")
+target_compile_definitions(ts_demo PRIVATE TS_DEFAULT_MODEL_PATH="${TS_MODEL_PATH}" TS_FIXTURE_DIR="${TS_FIXTURE_DIR}" TS_MODELS_DIR="${TS_MODELS_DIR}" TS_CONTRACT_DIR="${TS_CONTRACT_DIR}")
 # The runtime is a shared library inside build/_deps; tell the loader where.
 set_target_properties(ts_demo PROPERTIES BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}")
+
+# ---- C ABI example ---------------------------------------------------------------
+# Compiled as C (not C++) on purpose: proves ts_c_api.h is a clean C header.
+add_executable(c_caller examples/c_caller.c)
+set_target_properties(c_caller PROPERTIES LINKER_LANGUAGE CXX BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}")
+target_link_libraries(c_caller PRIVATE thermal_surrogate onnxruntime::onnxruntime)
 
 # ---- tests --------------------------------------------------------------------
 if(TS_BUILD_TESTS)
