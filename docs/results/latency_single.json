@@ -1,0 +1,59 @@
+{
+  "benchmark": "single prediction latency, surrogate path, one 64x64x1x7 sample",
+  "library_version": "0.1.0",
+  "machine": {
+    "build_type": "Release",
+    "compiler": "clang 21.0.0 (clang-2100.1.1.101)",
+    "cpu": "Apple M4",
+    "efficiency_cores": 6,
+    "hardware_threads": 10,
+    "memory_gb": 16.0,
+    "model": "Mac16,12",
+    "os": "macOS",
+    "performance_cores": 4
+  },
+  "model_version": "level4-unet-1.0.0",
+  "onnxruntime": "1.23.2",
+  "runs": [
+    {
+      "first_call_ms": 79.6445,
+      "intra_op_threads": 1,
+      "max_ms": 80.945875,
+      "mean_ms": 79.67654793000001,
+      "min_ms": 77.964333,
+      "n": 200,
+      "p50_ms": 79.905625,
+      "p95_ms": 80.793,
+      "p99_ms": 80.933625,
+      "session_load_ms": 31.033708,
+      "warmup": 20
+    },
+    {
+      "first_call_ms": 21.274084,
+      "intra_op_threads": 4,
+      "max_ms": 33.223166,
+      "mean_ms": 30.184913314999996,
+      "min_ms": 28.103333,
+      "n": 200,
+      "p50_ms": 30.286208,
+      "p95_ms": 32.571541,
+      "p99_ms": 33.079792,
+      "session_load_ms": 7.881209,
+      "warmup": 20
+    },
+    {
+      "first_call_ms": 30.378333,
+      "intra_op_threads": 0,
+      "max_ms": 32.776,
+      "mean_ms": 30.65644496000001,
+      "min_ms": 28.497208,
+      "n": 200,
+      "p50_ms": 30.574375,
+      "p95_ms": 31.83825,
+      "p99_ms": 32.687875,
+      "session_load_ms": 8.623708,
+      "warmup": 20
+    }
+  ],
+  "timing_scope": "Predictor::predict() wall time: input tensor wrap + Run + copy into Output::field; validation excluded"
+}

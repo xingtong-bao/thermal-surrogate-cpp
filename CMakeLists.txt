@@ -75,3 +75,14 @@ if(TS_BUILD_TESTS)
   include(GoogleTest)
   gtest_discover_tests(ts_tests)
 endif()
+
+# ---- benchmarks -----------------------------------------------------------------
+# Separate executables so a CI build can skip them; numbers go to docs/results/.
+option(TS_BUILD_BENCH "Build the benchmark executables" ON)
+if(TS_BUILD_BENCH)
+  add_executable(bench_latency bench/latency.cpp)
+  target_link_libraries(bench_latency PRIVATE thermal_surrogate onnxruntime::onnxruntime nlohmann_json::nlohmann_json)
+  target_include_directories(bench_latency PRIVATE bench)
+  target_compile_definitions(bench_latency PRIVATE TS_MODEL_PATH="${TS_MODEL_PATH}" TS_FIXTURE_DIR="${TS_FIXTURE_DIR}")
+  set_target_properties(bench_latency PROPERTIES BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}")
+endif()
