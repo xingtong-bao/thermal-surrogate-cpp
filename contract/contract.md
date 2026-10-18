@@ -113,12 +113,22 @@ informative only and carries no gate; S2b revisits this.
 
 The gate is enforced by a test (`S6.1`) on a fixed 50-sample subset; a failing gate fails
 the build. The 1.1 factor leaves room for fp32 ONNX export drift and nothing else.
-Numerical parity gates: PyTorch ↔ ONNX Runtime (Python) and ONNX Runtime (Python) ↔ C++
-max-abs-diff `< 1e-4 K` on fixed fixtures. (Revised in S3.1 from `1e-5`: outputs are
-float32 values of 300–500 K, where one ulp is 3.05e-5 K; the first export showed exactly
-a 1-ulp difference on some pixels, which is the floor for two fp32 implementations that
-accumulate convolutions in different orders. 1e-4 K leaves ~3 ulp and is still 10⁴×
-below the accuracy gate.)
+Numerical parity gates (purpose: catch wiring bugs such as a wrong layout, dtype or
+normalization constant, which produce errors ≥ 0.1 K; not to measure floating-point noise):
+
+| comparison | max abs diff | mean abs diff | basis |
+|---|---|---|---|
+| PyTorch fp32 (batch 1) ↔ ONNX Runtime (Python) | `< 5e-3 K` | `< 1e-4 K` | measured fp32 floors, S3.2 |
+| ONNX Runtime (Python) ↔ ONNX Runtime (C++) | `< 1e-4 K` | — | same runtime, same file: ≈ 3 ulp |
+
+History: the gate was first written as `1e-5` (S1.1, before the output magnitude was
+known), revised to `1e-4 K` in S3.1 when the fixture showed exactly one float32 ulp
+(3.05e-5 K at 350 K), and set to the values above in S3.2 from 100 test samples:
+PyTorch fp32 itself differs from a float64 run of the same network by up to 3.4e-4 K,
+ONNX Runtime by 8.5e-4 K, and the benchmark's own batched PyTorch evaluation path by
+9.7e-3 K (its batched CPU convolution kernel accumulates in a different order). The
+PyTorch↔ORT mean difference is 3.5e-6 K with 88 % of pixels bit-identical. Details:
+`docs/results/parity_python.json`, `docs/results/parity_notes.md`.
 
 ## 5. Fallback rules
 

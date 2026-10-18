@@ -1,0 +1,357 @@
+{
+  "description": "Reference pairs for the C++ parity test (S4.2). field_XX is the ONNX Runtime (Python) output for input_XX; torch_XX is the PyTorch fp32 batch-1 output. All float32, C order.",
+  "model_sha256": "709eae9ef9954dbb6f596f38ca71d04c01ba6d734a505bda8ce10ef71b4b53d3",
+  "gate_cpp_vs_python_ort_K": 0.0001,
+  "pairs": [
+    {
+      "pair": 0,
+      "test_split_index": 0,
+      "global_index": 12000,
+      "tmax_K": 362.6982421875,
+      "ort_vs_torch_max_abs_diff_K": 3.0517578125e-05,
+      "input": {
+        "file": "input_00.npy",
+        "shape": [
+          64,
+          64,
+          1,
+          7
+        ],
+        "sha256": "ccd21351329707dc0533423befd4eec3bac41c5daafbcb4dad0ed410c24d405d"
+      },
+      "field": {
+        "file": "field_00.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "ae74979946c5891eedb9c9509904a42bf5768198f78327d34b1bb07a89b44743"
+      },
+      "torch": {
+        "file": "torch_00.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "a8a70393aac228eee8f487343ce2c7c3c9c83cefbe6716c4d6af4c1503892c61"
+      }
+    },
+    {
+      "pair": 1,
+      "test_split_index": 330,
+      "global_index": 12330,
+      "tmax_K": 376.7872009277344,
+      "ort_vs_torch_max_abs_diff_K": 3.0517578125e-05,
+      "input": {
+        "file": "input_01.npy",
+        "shape": [
+          64,
+          64,
+          1,
+          7
+        ],
+        "sha256": "c461732bd44572165db84f81d9821668f0b67d61ff74a4713d7a342d5f30f3e1"
+      },
+      "field": {
+        "file": "field_01.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "6858a431b20ebd91b3cafd6adb7d0470035ffce72ace7a78c8e5d7042877e74c"
+      },
+      "torch": {
+        "file": "torch_01.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "1aecca6d39f1b21cac63c229d6c44a5f2dfa55529aa03276f735d4d8e59961bb"
+      }
+    },
+    {
+      "pair": 2,
+      "test_split_index": 660,
+      "global_index": 12660,
+      "tmax_K": 388.874267578125,
+      "ort_vs_torch_max_abs_diff_K": 3.0517578125e-05,
+      "input": {
+        "file": "input_02.npy",
+        "shape": [
+          64,
+          64,
+          1,
+          7
+        ],
+        "sha256": "4ddbd141890c6563246728c27572cb6465829bbf1f71caefa9897e066d8f1a5a"
+      },
+      "field": {
+        "file": "field_02.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "15dff0b11603a84c20425cb0d2e1ecd916f0e283f4259b55494783fcb8f6a201"
+      },
+      "torch": {
+        "file": "torch_02.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "885295e3f50876199b99f1911f3bf1af5714b6661a9218f39d24d6826f2c8705"
+      }
+    },
+    {
+      "pair": 3,
+      "test_split_index": 990,
+      "global_index": 12990,
+      "tmax_K": 355.84906005859375,
+      "ort_vs_torch_max_abs_diff_K": 3.0517578125e-05,
+      "input": {
+        "file": "input_03.npy",
+        "shape": [
+          64,
+          64,
+          1,
+          7
+        ],
+        "sha256": "21f823137206a71c2b05c2d9a27d39c9e68095243d4121aa67eee53f26498660"
+      },
+      "field": {
+        "file": "field_03.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "6f94c362c8feff9c1e5afb2844f67ac73ee29601d6985fd02b1262dc0a6eb68f"
+      },
+      "torch": {
+        "file": "torch_03.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "919b62f82e96cd5cffee802265997c17036c4724b3f6028c44085f90d4a5944d"
+      }
+    },
+    {
+      "pair": 4,
+      "test_split_index": 1320,
+      "global_index": 13320,
+      "tmax_K": 361.47607421875,
+      "ort_vs_torch_max_abs_diff_K": 3.0517578125e-05,
+      "input": {
+        "file": "input_04.npy",
+        "shape": [
+          64,
+          64,
+          1,
+          7
+        ],
+        "sha256": "010680a7cd4e968b8b3b8111aa4a17cabd6f8cd7cf1d36def8422436c218808f"
+      },
+      "field": {
+        "file": "field_04.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "f23dc95cf9d0c9219310cf400c4f8c83cf260477d22ff86b7704c04abc68b27d"
+      },
+      "torch": {
+        "file": "torch_04.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "ba012722b6846f892ea858951cdc71336a3982658c66afc773e33103a382035f"
+      }
+    },
+    {
+      "pair": 5,
+      "test_split_index": 1650,
+      "global_index": 13650,
+      "tmax_K": 380.6723327636719,
+      "ort_vs_torch_max_abs_diff_K": 3.0517578125e-05,
+      "input": {
+        "file": "input_05.npy",
+        "shape": [
+          64,
+          64,
+          1,
+          7
+        ],
+        "sha256": "88ff890cfb312f7ee5521a18842c6946dda4cea6e3bbc649927aed8f766c3281"
+      },
+      "field": {
+        "file": "field_05.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "4bdc19a65af2b63dc114bf1c0ea4307de2de1ee46b0d9293df0517adbf38dc48"
+      },
+      "torch": {
+        "file": "torch_05.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "d53be619f11e2aa603dc3b8a949bf2a0af71bde4df2be3df0c9554be066be463"
+      }
+    },
+    {
+      "pair": 6,
+      "test_split_index": 1980,
+      "global_index": 13980,
+      "tmax_K": 339.1293640136719,
+      "ort_vs_torch_max_abs_diff_K": 3.0517578125e-05,
+      "input": {
+        "file": "input_06.npy",
+        "shape": [
+          64,
+          64,
+          1,
+          7
+        ],
+        "sha256": "be98a09edd2b51e707e7ef2900cac3eb79e182ef382a14cdb2e87a7471ed413d"
+      },
+      "field": {
+        "file": "field_06.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "227e8962c135263b2de737a9b76e24ae3763aaf8f1fd0211cc13779d59755a6c"
+      },
+      "torch": {
+        "file": "torch_06.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "331d13e1fb7da2499a642b75e3bd74db047122e0d8681e1a92b42d061007ce36"
+      }
+    },
+    {
+      "pair": 7,
+      "test_split_index": 2310,
+      "global_index": 14310,
+      "tmax_K": 399.4298095703125,
+      "ort_vs_torch_max_abs_diff_K": 3.0517578125e-05,
+      "input": {
+        "file": "input_07.npy",
+        "shape": [
+          64,
+          64,
+          1,
+          7
+        ],
+        "sha256": "f78d17b0c46cd2729f325971ada6a28e0fde6f180f9de38d86cbcfba9d9eda23"
+      },
+      "field": {
+        "file": "field_07.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "191fd170f7634837bee0a9465cd52f03abefceed2585a6435f2642557d03c6f6"
+      },
+      "torch": {
+        "file": "torch_07.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "9b578b58bdce1d9910c81e18921a4b3a961a6b413933c80effddec5f74f862e2"
+      }
+    },
+    {
+      "pair": 8,
+      "test_split_index": 2640,
+      "global_index": 14640,
+      "tmax_K": 389.4291076660156,
+      "ort_vs_torch_max_abs_diff_K": 3.0517578125e-05,
+      "input": {
+        "file": "input_08.npy",
+        "shape": [
+          64,
+          64,
+          1,
+          7
+        ],
+        "sha256": "3103b34fcf38114a606da4a61bec9da9903f2a005ac381e73ad3d44bfb57202a"
+      },
+      "field": {
+        "file": "field_08.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "f6663892d14712cc019eed9461f35ecd53fb56172f220389b88daa515f2155c9"
+      },
+      "torch": {
+        "file": "torch_08.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "099167bca3b9061686389937e438238152685cf2ca9a8ba5fd35ae4365574313"
+      }
+    },
+    {
+      "pair": 9,
+      "test_split_index": 2970,
+      "global_index": 14970,
+      "tmax_K": 341.331787109375,
+      "ort_vs_torch_max_abs_diff_K": 3.0517578125e-05,
+      "input": {
+        "file": "input_09.npy",
+        "shape": [
+          64,
+          64,
+          1,
+          7
+        ],
+        "sha256": "1f916bad5b6d67bfde098c4690fefaaf0317934d01a958802ec06f9c226e7209"
+      },
+      "field": {
+        "file": "field_09.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "a2e9d090ac6ec3df0cac2c55a95bcde71f0834e9493c65eadb770efd7d8dae2e"
+      },
+      "torch": {
+        "file": "torch_09.npy",
+        "shape": [
+          64,
+          64,
+          1
+        ],
+        "sha256": "c9e620b8508f8c5f78ae19bc0417f76063251c5fa51598cb7b276d137f039d37"
+      }
+    }
+  ]
+}
