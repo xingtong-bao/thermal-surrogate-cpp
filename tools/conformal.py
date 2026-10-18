@@ -53,6 +53,7 @@ def main():
     p.add_argument("--repo", default=os.path.join(os.path.dirname(__file__), ".."))
     p.add_argument("--checkpoint", default="checkpoints/level4_UNet/model.pt", help="relative to --bench, or absolute")
     p.add_argument("--version", default="level4-unet-1.0.0")
+    p.add_argument("--model-name", default="UNet", help="benchmark model name for the prediction path (UNet | UFNO)")
     p.add_argument("--out", default=None, help="default: <repo>/contract/conformal.json")
     a = p.parse_args()
     bench, repo = os.path.abspath(a.bench), os.path.abspath(a.repo)
@@ -75,7 +76,7 @@ def main():
         from exp.exp_basic import build_model
         x_norm, model, y_norm = load_checkpoint(a.checkpoint, build_model("UNet", 7, 1, 64))
     model.eval()
-    pred = _predict(model, x_norm, y_norm, xva.contiguous(), "UNet", "cpu").numpy().astype(np.float64)   # (n,X,Y,Z)
+    pred = _predict(model, x_norm, y_norm, xva.contiguous(), a.model_name, "cpu").numpy().astype(np.float64)   # (n,X,Y,Z)
     truth = yva.numpy().astype(np.float64)
     n = pred.shape[0]
     mae = np.abs(pred - truth).reshape(n, -1).mean(axis=1)

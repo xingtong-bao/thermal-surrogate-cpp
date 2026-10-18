@@ -48,8 +48,22 @@ what-if samples by scaling the power and the temperature rise together.
 Fine-tuning on such augmented copies raises the power gain from 0.1 to
 **0.9** while the known-chip error stays inside its gate (1.46 K vs 2.01 K);
 the hotspot-median gate (0.95 K) is missed by 0.18 K, so v1.2 is a measured
-candidate, not a release.
+candidate, not a release. A hotspot-weighted retrain (v1.3) did not close
+the gap (1.36 K); the negative result is recorded.
 [power_aug_notes.md](docs/results/power_aug_notes.md)
+
+**Swapping the model (S8.7/S8.8).** The benchmark's U-FNO, exported with its
+FFT layers rewritten as matrix products, halves the in-support error
+(0.60 K vs 1.05 K on the 50-sample subset, Tmax median 0.27 K) at 25× the
+CPU latency (760 ms, 90 % in its 3-D convolutions) and is *worse* on unseen
+chips (24.6 K). A U-Net + U-FNO ensemble lands at 0.69 K, and the two
+models' disagreement is 19× larger on unseen chips than on seen ones, a
+free uncertainty signal. Same contract, same validator, same gates for every
+model. [model_swap_notes.md](docs/results/model_swap_notes.md)
+
+**Power what-ifs by physics (S8.6).** Since conduction is linear in power,
+`solve_power_scaled` answers "all chiplet powers × f" exactly from the base
+prediction; gain 1 by construction. [contract §9](contract/contract.md)
 
 **Does this prove the AI approach does not work?** No. It shows that *this*
 public model is reliable inside its training distribution and unreliable
@@ -66,7 +80,7 @@ git clone https://github.com/xingtong-bao/thermal-surrogate-cpp && cd thermal-su
 gh release download models-v1 --dir models          # model.onnx + model_dynamic.onnx (20 MB each)
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
-ctest --test-dir build --output-on-failure        # 36 tests, ~20 s
+ctest --test-dir build --output-on-failure        # 38 tests, ~20 s
 ./build/ts_demo --info                            # runtime version + model IO
 ./build/c_caller models contract tests/fixtures/sample_input.npy   # C ABI example
 ```
@@ -247,7 +261,7 @@ the pinned ONNX Runtime package.
 
 ## Tests
 
-`ctest` runs 36 tests: `Skeleton.*` (runtime and model IO match the
+`ctest` runs 38 tests: `Skeleton.*` (runtime and model IO match the
 contract), `Predictor.*` (construction, rejection without exceptions, parity
 with the Python runtime, zero-copy and batch paths), `Validator.*` (each
 status code, both fixtures, feature extraction equals Python),
@@ -256,7 +270,8 @@ status code, both fixtures, feature extraction equals Python),
 `ExternalBackend.*` (protocol, exit codes, timeout kill),
 `Concurrency.*`, `AccuracyGate.*` (contract gates on the committed
 50-sample subset; status spellings equal the schema enum), `Conformal.*`
-(bounds load, widen with the rise, and cover the held-out subset).
+(bounds load, widen with the rise, and cover the held-out subset), `PowerWhatIf.*`
+(physics-scaled what-ifs have gain exactly 1).
 
 ## Layout
 
@@ -268,7 +283,7 @@ bench/           latency, throughput, dynamic size
 tests/           GoogleTest suite + fixtures (parity pairs, eval50 subset, validator expectations)
 tools/           Python: asset fetch, baseline, statistics, analyses, export, parity, HotSpot wrapper
 models/          metadata.json, config_bank.npy, fd_solver_params.json (ONNX files via release)
-models_v1.1_*/, models_v1.2_poweraug/   candidates with their own metadata, bank and conformal table (stage 8)
+models_v1.1_*/, models_v1.2_*/, models_ufno/, models_ensemble/   candidates with their own metadata, bank and conformal table (stage 8)
 docs/results/    every measured number, with notes; docs/failure_analysis.md; docs/integration_design.md
 ```
 

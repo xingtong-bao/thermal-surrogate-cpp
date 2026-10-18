@@ -1,0 +1,46 @@
+{
+  "benchmark": "single prediction latency, surrogate path, one 64x64x1x7 sample",
+  "library_version": "0.1.0",
+  "machine": {
+    "build_type": "Release",
+    "compiler": "clang 21.0.0 (clang-2100.1.1.101)",
+    "cpu": "Apple M4",
+    "efficiency_cores": 6,
+    "hardware_threads": 10,
+    "memory_gb": 16.0,
+    "model": "Mac16,12",
+    "os": "macOS",
+    "performance_cores": 4
+  },
+  "model_version": "level4-unet-1.0.0",
+  "onnxruntime": "1.23.2",
+  "runs": [
+    {
+      "first_call_ms": 1304.132584,
+      "intra_op_threads": 1,
+      "max_ms": 1993.012375,
+      "mean_ms": 1288.2540033399998,
+      "min_ms": 1222.463541,
+      "n": 50,
+      "p50_ms": 1261.466417,
+      "p95_ms": 1461.169,
+      "p99_ms": 1993.012375,
+      "session_load_ms": 134.892292,
+      "warmup": 10
+    },
+    {
+      "first_call_ms": 922.450166,
+      "intra_op_threads": 4,
+      "max_ms": 804.314,
+      "mean_ms": 760.5994206999999,
+      "min_ms": 738.641083,
+      "n": 50,
+      "p50_ms": 759.221458,
+      "p95_ms": 794.942916,
+      "p99_ms": 804.314,
+      "session_load_ms": 101.519292,
+      "warmup": 10
+    }
+  ],
+  "timing_scope": "Predictor::predict() wall time: input tensor wrap + Run + copy into Output::field; validation excluded"
+}

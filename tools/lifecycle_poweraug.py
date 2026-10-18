@@ -47,17 +47,19 @@ def main():
     p.add_argument("--bench", required=True)
     p.add_argument("--finetuned", required=True)
     p.add_argument("--demo", default=os.path.join(REPO, "build", "ts_demo"))
+    p.add_argument("--tag", default="poweraug")
+    p.add_argument("--version", default="level4-unet-poweraug-1.2.0")
     a = p.parse_args()
     bench, ft = os.path.abspath(a.bench), os.path.abspath(a.finetuned)
-    out = os.path.join(REPO, "models_v1.2_poweraug")
+    out = os.path.join(REPO, f"models_v1.2_{a.tag}")
     os.makedirs(out, exist_ok=True)
-    version = "level4-unet-poweraug-1.2.0"
+    version = a.version
     ftm = json.load(open(os.path.join(ft, "metrics.json")))
 
     subprocess.run([PY, os.path.join(HERE, "export_onnx.py"), "--bench", bench, "--checkpoint", os.path.join(ft, "model.pt"),
                     "--version", version, "--out-dir", out, "--contract-only"], check=True)
     m = json.load(open(os.path.join(out, "metadata.json")))
-    m["source"]["checkpoint"] = "external/thermbench_data/level4_UNet_poweraug/model.pt (tools/finetune_power_aug.py)"
+    m["source"]["checkpoint"] = f"external/thermbench_data/{os.path.basename(ft)}/model.pt (tools/finetune_power_aug.py)"
     m["source"]["augmentation"] = ftm
     json.dump(m, open(os.path.join(out, "metadata.json"), "w"), indent=2)
 
@@ -87,25 +89,25 @@ def main():
 
     gates = json.load(open(os.path.join(REPO, "docs", "results", "baseline_unet_level4_per_sample.json")))["gates"]
     res = os.path.join(REPO, "docs", "results")
-    seen = compare(a.demo, "level4_eval50_v1.2", os.path.join(REPO, "tests", "fixtures", "eval50", "level4_inputs.npy"), os.path.join(REPO, "tests", "fixtures", "eval50", "level4_truth.npy"),
-                   out, out, os.path.join(res, "power_aug_level4_eval50_v1.2.csv"))
+    seen = compare(a.demo, f"level4_eval50_{a.tag}", os.path.join(REPO, "tests", "fixtures", "eval50", "level4_inputs.npy"), os.path.join(REPO, "tests", "fixtures", "eval50", "level4_truth.npy"),
+                   out, out, os.path.join(res, f"power_aug_{a.tag}_level4_eval50.csv"))
     seen["passes"] = {"field_mae": seen["surrogate_mae_K"] < gates["field_mae_K"], "worst5pct": seen["surrogate_mae_p95_K"] < gates["worst5pct_per_sample_mae_K"],
                       "tmax_median": seen["tmax_abs_err_median_K"] < gates["tmax_abs_err_median_K"]}
     seen["passes_all"] = all(seen["passes"].values())
     ev = os.path.join(REPO, "..", "external", "eval_sets")
-    unseen = compare(a.demo, "level5_v1.2", os.path.join(ev, "level5_inputs.npy"), os.path.join(ev, "level5_truth.npy"), out, out, os.path.join(res, "power_aug_level5_v1.2.csv"))
+    unseen = compare(a.demo, f"level5_{a.tag}", os.path.join(ev, "level5_inputs.npy"), os.path.join(ev, "level5_truth.npy"), out, out, os.path.join(res, f"power_aug_{a.tag}_level5.csv"))
     print(f"[seen] MAE {seen['surrogate_mae_K']:.3f} p95 {seen['surrogate_mae_p95_K']:.3f} Tmax med {seen['tmax_abs_err_median_K']:.3f} -> {seen['passes']}")
     print(f"[unseen] surrogate MAE {unseen['surrogate_mae_K']:.2f} K, fallback {unseen['fallback_rate']:.0%}")
 
     subprocess.run([PY, os.path.join(HERE, "power_gain_verification.py"), "--n", "10", "--model", os.path.join(out, "model.onnx"),
-                    "--out", os.path.join(res, "power_gain_verification_v1.2.json")], check=True, capture_output=True)
-    gain = json.load(open(os.path.join(res, "power_gain_verification_v1.2.json")))["summary"]
+                    "--out", os.path.join(res, f"power_gain_verification_{a.tag}.json")], check=True, capture_output=True)
+    gain = json.load(open(os.path.join(res, f"power_gain_verification_{a.tag}.json")))["summary"]
     print(f"[hotspot gain] level4 median {gain['level4']['gain_median']:.2f}, level5 median {gain['level5']['gain_median']:.2f}")
 
     json.dump({"version": version, "finetune": ftm, "parity_max_abs_diff_K": worst, "conformal_overall": conf["overall"], "gates": gates,
                "seen_eval50_cpp": seen, "unseen_level5_cpp": unseen, "hotspot_gain_v1.2": gain,
                "hotspot_gain_v1.0": json.load(open(os.path.join(res, "power_gain_verification.json")))["summary"]},
-              open(os.path.join(res, "power_aug_lifecycle.json"), "w"), indent=2)
+              open(os.path.join(res, f"power_aug_lifecycle_{a.tag}.json"), "w"), indent=2)
     print("-> docs/results/power_aug_lifecycle.json")
 
 

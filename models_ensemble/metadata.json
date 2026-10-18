@@ -1,0 +1,82 @@
+{
+  "model_version": "level4-ensemble-unet-ufno-1.0.0",
+  "schema_version": "1.0.0",
+  "source": {
+    "members": [
+      "models/model.onnx (level4-unet-1.0.0)",
+      "models_ufno/model.onnx (level4-ufno-1.0.0)"
+    ],
+    "combination": "arithmetic mean of the two fields"
+  },
+  "export": {
+    "tool": "tools/export_ensemble_onnx.py",
+    "torch": "2.0.1",
+    "onnxruntime": "1.23.2",
+    "opset": 17,
+    "date": "2026-10-18"
+  },
+  "io": {
+    "input": {
+      "name": "input",
+      "shape": [
+        1,
+        64,
+        64,
+        1,
+        7
+      ],
+      "axes": [
+        "B",
+        "X",
+        "Y",
+        "Z",
+        "P"
+      ],
+      "dtype": "float32"
+    },
+    "output": {
+      "name": "field",
+      "shape": [
+        1,
+        64,
+        64,
+        1
+      ],
+      "axes": [
+        "B",
+        "X",
+        "Y",
+        "Z"
+      ],
+      "dtype": "float32",
+      "unit": "K"
+    }
+  },
+  "normalization": {
+    "baked_into_graph": true
+  },
+  "files": {
+    "model.onnx": {
+      "size_bytes": 52249343,
+      "sha256": "251857244bb46565126930e722bd7981c95b44c92f23051cf4b7da6fa1d46584"
+    }
+  },
+  "spread_study": {
+    "level4": {
+      "n": 50,
+      "mae_unet_K": 1.0509604215621948,
+      "mae_ufno_K": 0.6024526357650757,
+      "mae_ensemble_K": 0.6880694627761841,
+      "spread_mean_K": 1.0430761575698853,
+      "spearman_spread_vs_ensemble_error": 0.704201680672269
+    },
+    "level5": {
+      "n": 50,
+      "mae_unet_K": 14.818939208984375,
+      "mae_ufno_K": 24.634986877441406,
+      "mae_ensemble_K": 18.360794067382812,
+      "spread_mean_K": 19.61117935180664,
+      "spearman_spread_vs_ensemble_error": 0.4264585834333733
+    }
+  }
+}

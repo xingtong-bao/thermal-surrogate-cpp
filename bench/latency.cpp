@@ -15,6 +15,7 @@
 //   bench_latency [--n 200] [--warmup 20] [--threads 1,4,0] [--out docs/results/latency_single.json]
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -62,7 +63,8 @@ int main(int argc, char** argv) {
     else if (!std::strcmp(argv[i], "--threads")) threads = parse_list(argv[i + 1]);
     else if (!std::strcmp(argv[i], "--out")) out_path = argv[i + 1];
   }
-  const std::string model = TS_MODEL_PATH;
+  const char* ov = std::getenv("TS_MODEL_PATH_OVERRIDE");        // benchmark another export (S8.7)
+  const std::string model = ov ? ov : TS_MODEL_PATH;
   const std::string meta = model.substr(0, model.rfind('/')) + "/metadata.json";
   const auto x = ts::npy::load_f32(std::string(TS_FIXTURE_DIR) + "/sample_input.npy");
   const ts::Input in{x.data.data(), ts::kInputShape};

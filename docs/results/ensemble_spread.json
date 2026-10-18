@@ -1,0 +1,18 @@
+{
+  "level4": {
+    "n": 50,
+    "mae_unet_K": 1.0509604215621948,
+    "mae_ufno_K": 0.6024526357650757,
+    "mae_ensemble_K": 0.6880694627761841,
+    "spread_mean_K": 1.0430761575698853,
+    "spearman_spread_vs_ensemble_error": 0.704201680672269
+  },
+  "level5": {
+    "n": 50,
+    "mae_unet_K": 14.818939208984375,
+    "mae_ufno_K": 24.634986877441406,
+    "mae_ensemble_K": 18.360794067382812,
+    "spread_mean_K": 19.61117935180664,
+    "spearman_spread_vs_ensemble_error": 0.4264585834333733
+  }
+}

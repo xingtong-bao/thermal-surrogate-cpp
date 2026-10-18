@@ -1,0 +1,90 @@
+{
+  "model_version": "level4-ufno-1.0.0",
+  "schema_version": "1.0.0",
+  "source": {
+    "benchmark": "IC-ThermBench (CC BY 4.0)",
+    "checkpoint": "external/thermbench_data/level4_UFNO/model.pt",
+    "checkpoint_sha256": "a08b07527c78eb8cf1cc5c7ea40a94c7062d40cfce0e3ffdb03f05f8f32d610b",
+    "architecture": "U-FNO (Net3d: 6 U-Fourier layers, width 36, modes 10x10x1), spectral layers rewritten as DFT matrix products for export",
+    "params": 1993649
+  },
+  "export": {
+    "tool": "tools/export_ufno_onnx.py",
+    "torch": "2.0.1",
+    "onnx": "1.23.2",
+    "onnxruntime": "1.23.2",
+    "opset": 17,
+    "date": "2026-10-18",
+    "dft_vs_fft_max_abs_diff_K": 3.0517578125e-05,
+    "ort_vs_torch_max_abs_diff_K": 6.103515625e-05
+  },
+  "io": {
+    "input": {
+      "name": "input",
+      "shape": [
+        1,
+        64,
+        64,
+        1,
+        7
+      ],
+      "axes": [
+        "B",
+        "X",
+        "Y",
+        "Z",
+        "P"
+      ],
+      "dtype": "float32",
+      "layout": "C-contiguous, physical units as in contract section 2"
+    },
+    "output": {
+      "name": "field",
+      "shape": [
+        1,
+        64,
+        64,
+        1
+      ],
+      "axes": [
+        "B",
+        "X",
+        "Y",
+        "Z"
+      ],
+      "dtype": "float32",
+      "unit": "K"
+    }
+  },
+  "normalization": {
+    "baked_into_graph": true,
+    "x_mean": [
+      45.003807067871094,
+      22.049999237060547,
+      21.899999618530273,
+      49.80644226074219,
+      313.2140197753906,
+      5318.1201171875,
+      0.02211057022213936
+    ],
+    "x_std": [
+      85.82110595703125,
+      14.343846321105957,
+      14.728928565979004,
+      49.249725341796875,
+      8.662182807922363,
+      5113.349609375,
+      0.02954956702888012
+    ],
+    "y_mean": 356.2989501953125,
+    "y_std": 29.173845291137695
+  },
+  "files": {
+    "model.onnx": {
+      "size_bytes": 31986437,
+      "sha256": "5894e49210e3e36480c5d43047becc68133ebecd83bacc5c3e713c2f3dfc6c96",
+      "node_count": 677,
+      "opset": 17
+    }
+  }
+}
