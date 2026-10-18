@@ -1,0 +1,9 @@
+set,backend,n,n_ok,mae_K,mae_p95_K,tmax_abs_err_mean_K,max_abs_err_K,latency_median_ms,fallback_rate,sources
+level4,surrogate,50,50,1.051,1.6559,0.7534,14.899,21.9421,,surrogate=50
+level4,fd_solver,50,50,12.7662,22.1654,17.2088,65.7673,34.434,,reference_inprocess=50
+level4,external,50,50,13.3665,30.2513,18.4884,45.96,2676.655,,reference_external=50
+level4,dispatcher,50,50,1.051,1.6559,0.7534,14.899,22.7925,0.0,surrogate=50
+level5,surrogate,50,50,14.8189,38.8384,23.5333,86.4022,22.4836,,surrogate=50
+level5,fd_solver,50,50,17.7926,54.785,15.0776,127.245,40.7194,,reference_inprocess=50
+level5,external,50,50,3.3564,8.3872,3.9062,13.79,1966.225,,reference_external=50
+level5,dispatcher,50,50,3.3564,8.3872,3.9062,13.79,1974.26,1.0,reference_external=50
