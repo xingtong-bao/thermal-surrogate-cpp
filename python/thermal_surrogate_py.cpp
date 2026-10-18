@@ -43,6 +43,10 @@ class Engine {
       py::gil_scoped_release release;            // the runtime does not need the GIL
       dispatcher_->solve(in, out);
     }
+    return to_dict(out);
+  }
+
+  static py::dict to_dict(const ts::Output& out) {
     py::dict d;
     d["status"] = ts::to_string(out.status.code);
     d["message"] = out.status.message;
@@ -63,6 +67,19 @@ class Engine {
     return d;
   }
 
+  py::dict predict_power_scaled(py::array_t<float, py::array::c_style | py::array::forcecast> x, double factor) {
+    if (x.ndim() != 4) throw py::value_error("input must have shape (64, 64, 1, 7)");
+    ts::Input in;
+    in.data = x.data();
+    for (int i = 0; i < 4; ++i) in.shape[static_cast<std::size_t>(i)] = static_cast<std::size_t>(x.shape(i));
+    ts::Output out;
+    {
+      py::gil_scoped_release release;
+      dispatcher_->solve_power_scaled(in, factor, out);
+    }
+    return to_dict(out);
+  }
+
   std::string model_version() const { return predictor_.model_version(); }
 
  private:
@@ -78,5 +95,7 @@ PYBIND11_MODULE(thermal_surrogate, m) {
   py::class_<Engine>(m, "Engine")
       .def(py::init<const std::string&, const std::string&>(), py::arg("models_dir"), py::arg("contract_dir"))
       .def("predict", &Engine::predict, py::arg("input"), "Validate, predict or fall back; returns a dict")
+      .def("predict_power_scaled", &Engine::predict_power_scaled, py::arg("input"), py::arg("factor"),
+           "Power what-if by physics: exact field for all chiplet powers scaled by factor")
       .def_property_readonly("model_version", &Engine::model_version);
 }

@@ -77,6 +77,16 @@ class Dispatcher {
   // Optional: once set, surrogate answers carry mae_bound_90_K / tmax_err_bound_90_K.
   void set_conformal(ConformalTable table) { conformal_ = std::move(table); }
 
+  // Power what-if by physics instead of by the model (contract section 9, S8.6).
+  // Steady-state conduction is linear in the power (HotSpot: 1.000 +/- 0.002), so
+  // for a design whose chiplet powers are all scaled by `factor` the exact field is
+  //     T' = T_ambient + factor * (T - T_ambient)
+  // where T is the answer for the unscaled design. This call validates and solves
+  // the *base* input (so I4/I5 judge the design the model actually sees), then
+  // scales the rise. The surrogate's own weak power response (gain 0.1-0.3) never
+  // enters. `factor` must be > 0. Error bounds scale with the rise too.
+  void solve_power_scaled(const Input& base, double factor, Output& out) const noexcept;
+
  private:
   const Validator& validator_;
   std::vector<std::unique_ptr<ISolverBackend>> backends_;

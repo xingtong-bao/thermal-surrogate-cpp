@@ -170,6 +170,19 @@ No exception crosses the library boundary; constructors are the only place that 
   `contract/schema.json`'s `schema_version`. Refusal is `ModelNotLoaded`, not a crash.
 - `Output.model_version` lets a caller audit which model produced a stored result.
 
+## 9. Power what-if by physics (added S8.6)
+
+Steady-state conduction is linear in the dissipated power (verified with HotSpot to
+0.2 %, `docs/results/power_gain_verification.json`). The library therefore answers
+"the same design with every chiplet power scaled by `f`" without asking the model:
+`Dispatcher::solve_power_scaled(base, f, out)` validates and solves the *base* design
+(rules I1–I5 and the fallback apply to it) and returns
+`field' = ambient + f · (field − ambient)`, `tmax'` likewise, error bounds scaled by
+`f`. The surrogate's own weak power response (gain 0.1–0.3, S2b.1/S8.1) never enters.
+Not covered: scaling a subset of chiplets, which breaks the proportionality; such
+queries go to the reference backends. Exposed as `ts_predict_power_scaled` (C ABI) and
+`Engine.predict_power_scaled` (Python).
+
 ## 8. Latency
 
 No gate in v1. Single-sample and batch latency are measured and reported (`S4.4`, `S4.5`);

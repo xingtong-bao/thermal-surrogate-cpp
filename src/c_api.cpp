@@ -53,10 +53,26 @@ ts_engine* ts_engine_create(const char* model_dir, const char* contract_dir, cha
 
 void ts_engine_destroy(ts_engine* engine) { delete engine; }
 
+namespace {
+ts_status fill_result(const ts::Output& out, float* field, ts_result* result);
+}
+
+ts_status ts_predict_power_scaled(const ts_engine* engine, const float* input, double factor, float* field, ts_result* result) {
+  if (!engine || !input || !field) return TS_INVALID_ARGUMENT;
+  ts::Output out;
+  engine->dispatcher->solve_power_scaled(ts::Input{input, ts::kInputShape}, factor, out);
+  return fill_result(out, field, result);
+}
+
 ts_status ts_predict(const ts_engine* engine, const float* input, float* field, ts_result* result) {
   if (!engine || !input || !field) return TS_INVALID_ARGUMENT;
   ts::Output out;
   engine->dispatcher->solve(ts::Input{input, ts::kInputShape}, out);
+  return fill_result(out, field, result);
+}
+
+namespace {
+ts_status fill_result(const ts::Output& out, float* field, ts_result* result) {
   if (result) {
     *result = ts_result{};
     result->tmax = out.tmax;
@@ -74,6 +90,7 @@ ts_status ts_predict(const ts_engine* engine, const float* input, float* field, 
   if (out.status.ok()) std::memcpy(field, out.field.data(), ts::kCells * sizeof(float));
   return map_code(out.status.code);
 }
+}  // namespace
 
 const char* ts_version(void) { return ts::version().library; }
 

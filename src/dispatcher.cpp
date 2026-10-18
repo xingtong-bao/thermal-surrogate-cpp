@@ -2,6 +2,7 @@
 #include "thermal_surrogate/dispatcher.h"
 
 #include <chrono>
+#include <cmath>
 #include <fstream>
 #include <limits>
 #include <nlohmann/json.hpp>
@@ -91,6 +92,23 @@ void Dispatcher::solve(const Input& in, Output& out, Trace& trace) const noexcep
   out.oob_channels = rep.oob_channels;
   if (!out.status.ok() || out.source != Source::Surrogate) out.model_version.clear();
   out.latency_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+}
+
+void Dispatcher::solve_power_scaled(const Input& base, double factor, Output& out) const noexcept {
+  if (!(factor > 0.0) || !std::isfinite(factor)) {
+    out = Output{};
+    out.status = {StatusCode::InvalidInput, "power factor must be a positive finite number"};
+    return;
+  }
+  solve(base, out);
+  if (!out.status.ok()) return;
+  const double ambient = base.data[static_cast<std::size_t>(Channel::AmbientK)];
+  const auto f = static_cast<float>(factor);
+  const auto amb = static_cast<float>(ambient);
+  for (auto& v : out.field) v = amb + f * (v - amb);         // exact linear response
+  out.tmax = amb + f * (out.tmax - amb);                      // argmax is unchanged by a positive scale
+  out.mae_bound_90_K *= f;                                    // bounds are on the rise, so they scale too
+  out.tmax_err_bound_90_K *= f;
 }
 
 }  // namespace thermal_surrogate

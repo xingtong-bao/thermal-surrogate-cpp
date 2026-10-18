@@ -64,6 +64,11 @@ void ts_engine_destroy(ts_engine* engine);
 /* input: 64*64*1*7 floats, C order, physical units. field: 64*64 floats, K. */
 ts_status ts_predict(const ts_engine* engine, const float* input, float* field, ts_result* result);
 
+/* Power what-if by physics: validates and predicts `input` (the unscaled design),
+ * then returns the exact field for all chiplet powers scaled by `factor`
+ * (T' = T_amb + factor * (T - T_amb); conduction is linear in power). */
+ts_status ts_predict_power_scaled(const ts_engine* engine, const float* input, double factor, float* field, ts_result* result);
+
 const char* ts_version(void);              /* library version string */
 const char* ts_status_name(ts_status code);
 

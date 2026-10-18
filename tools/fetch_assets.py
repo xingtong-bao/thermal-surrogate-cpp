@@ -192,10 +192,12 @@ def download_whole(session: requests.Session, url: str, dest: Path, size: int | 
                 f.write(block)
 
 
-def fetch(what: str, out: Path, manifest: dict) -> int:
+def fetch(what: str, out: Path, manifest: dict, checkpoint_members=None) -> int:
     session = requests.Session()
     session.headers["User-Agent"] = USER_AGENT
     file_id, wanted = (DATASETS_FILE_ID, DATASET_MEMBERS) if what == "datasets" else (CHECKPOINTS_FILE_ID, CHECKPOINT_MEMBERS)
+    if what == "checkpoint" and checkpoint_members:
+        wanted = checkpoint_members
 
     url = resolve_drive_url(session, file_id)
     res = probe(session, url)
@@ -229,6 +231,8 @@ def main() -> int:
     ap.add_argument("--what", choices=["datasets", "checkpoint", "all"], default="all")
     ap.add_argument("--out", type=Path, required=True, help="directory that will hold level4_steady/, level5_steady/, level4_UNet/")
     ap.add_argument("--manifest", type=Path, default=None, help="json file recording sizes and SHA-256 of fetched files")
+    ap.add_argument("--checkpoint-members", default=None,
+                    help="comma-separated archive prefixes to extract from the checkpoints archive (default: level4_UNet/)")
     args = ap.parse_args()
 
     manifest = {"source": "IC-ThermBench (Day333/ThermalBench), data CC BY 4.0, code MIT",
@@ -240,7 +244,8 @@ def main() -> int:
     rc = EXIT_OK
     for what in todo:
         try:
-            rc = max(rc, fetch(what, args.out, manifest))
+            members = tuple(s.strip() for s in args.checkpoint_members.split(",")) if args.checkpoint_members else None
+            rc = max(rc, fetch(what, args.out, manifest, checkpoint_members=members))
         except QuotaExceeded as e:
             print(f"[{what}] {e}", flush=True)
             rc = max(rc, EXIT_QUOTA)
