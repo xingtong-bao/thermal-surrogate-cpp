@@ -69,8 +69,19 @@
   "level4_eval50_cpp": {
     "surrogate_mae_K": 3.6627314,
     "surrogate_mae_p95_K": 7.96416,
-    "gate_field_mae_K": 2.012188324971994,
-    "passes_level4_gate": false,
+    "tmax_abs_err_median_K": 4.33981,
+    "gates": {
+      "field_mae_K": 2.012188324971994,
+      "worst5pct_per_sample_mae_K": 3.7921820611879227,
+      "tmax_abs_err_median_K": 0.9517745971679689,
+      "factor": 1.1
+    },
+    "passes": {
+      "field_mae": false,
+      "worst5pct": false,
+      "tmax_median": false
+    },
+    "passes_all": false,
     "v1.0_reference_mae_K": 1.05
   }
 }

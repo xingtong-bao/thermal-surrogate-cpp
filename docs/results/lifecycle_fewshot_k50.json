@@ -1,6 +1,8 @@
 {
   "version": "level4-unet-ft-level5-k50-1.1.0",
+  "tag": "k50",
   "shots_per_case": 50,
+  "replay": 0,
   "finetune": {
     "n_finetune": 250,
     "n_holdout": 2500,
@@ -60,8 +62,8 @@
       "dispatcher_mae_K": 3.4671702,
       "fallback_rate": 0.24,
       "dispatcher_sources": {
-        "surrogate": 38,
-        "reference_inprocess": 12
+        "reference_inprocess": 12,
+        "surrogate": 38
       }
     }
   },
@@ -69,8 +71,19 @@
   "level4_eval50_cpp": {
     "surrogate_mae_K": 5.7934508,
     "surrogate_mae_p95_K": 11.5896,
-    "gate_field_mae_K": 2.012188324971994,
-    "passes_level4_gate": false,
+    "tmax_abs_err_median_K": 5.80823,
+    "gates": {
+      "field_mae_K": 2.012188324971994,
+      "worst5pct_per_sample_mae_K": 3.7921820611879227,
+      "tmax_abs_err_median_K": 0.9517745971679689,
+      "factor": 1.1
+    },
+    "passes": {
+      "field_mae": false,
+      "worst5pct": false,
+      "tmax_median": false
+    },
+    "passes_all": false,
     "v1.0_reference_mae_K": 1.05
   }
 }

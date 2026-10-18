@@ -43,12 +43,14 @@ def main():
     p.add_argument("--finetuned", required=True, help="directory written by tools/finetune_fewshot.py")
     p.add_argument("--shots", type=int, required=True)
     p.add_argument("--out", default=None, help="default: <repo>/models_v1.1_k<shots>")
+    p.add_argument("--tag", default=None, help="label for result files (default: k<shots>)")
     p.add_argument("--demo", default=os.path.join(REPO, "build", "ts_demo"))
     a = p.parse_args()
     bench, ft = os.path.abspath(a.bench), os.path.abspath(a.finetuned)
-    out = os.path.abspath(a.out) if a.out else os.path.join(REPO, f"models_v1.1_k{a.shots}")
+    tag = a.tag or f"k{a.shots}"
+    out = os.path.abspath(a.out) if a.out else os.path.join(REPO, f"models_v1.1_{tag}")
     os.makedirs(out, exist_ok=True)
-    version = f"level4-unet-ft-level5-k{a.shots}-1.1.0"
+    version = f"level4-unet-ft-level5-{tag}-1.1.0"
 
     # 1. export
     subprocess.run([sys.executable, os.path.join(HERE, "export_onnx.py"), "--bench", bench, "--checkpoint", os.path.join(ft, "model.pt"),
@@ -125,26 +127,26 @@ def main():
     np.save(os.path.join(ev, "level5_holdout50_inputs.npy"), np.ascontiguousarray(xs[sel], dtype=np.float32))
     np.save(os.path.join(ev, "level5_holdout50_truth.npy"), np.ascontiguousarray(ys[sel], dtype=np.float32))
     results = {}
-    for tag, mdir, cdir in (("v1.0", os.path.join(REPO, "models"), os.path.join(REPO, "contract")), ("v1.1", out, out)):
-        csv_path = os.path.join(REPO, "docs", "results", f"lifecycle_k{a.shots}_level5_holdout_{tag}.csv")
+    for vtag, mdir, cdir in (("v1.0", os.path.join(REPO, "models"), os.path.join(REPO, "contract")), ("v1.1", out, out)):
+        csv_path = os.path.join(REPO, "docs", "results", f"lifecycle_{tag}_level5_holdout_{vtag}.csv")
         env = dict(os.environ, TS_MODELS_DIR_OVERRIDE=mdir, TS_CONTRACT_DIR_OVERRIDE=cdir)
-        subprocess.run([a.demo, "--compare", f"level5_holdout_k{a.shots}_{tag}", os.path.join(ev, "level5_holdout50_inputs.npy"), os.path.join(ev, "level5_holdout50_truth.npy"), "50", csv_path],
+        subprocess.run([a.demo, "--compare", f"level5_holdout_{tag}_{vtag}", os.path.join(ev, "level5_holdout50_inputs.npy"), os.path.join(ev, "level5_holdout50_truth.npy"), "50", csv_path],
                        env=env, check=True, capture_output=True)
         import csv
         rows = list(csv.DictReader(open(csv_path)))
         disp = [r for r in rows if r["backend"] == "dispatcher"]; sur = [r for r in rows if r["backend"] == "surrogate"]
-        results[tag] = {"surrogate_mae_K": float(np.mean([float(r["mae_K"]) for r in sur])),
+        results[vtag] = {"surrogate_mae_K": float(np.mean([float(r["mae_K"]) for r in sur])),
                         "dispatcher_mae_K": float(np.mean([float(r["mae_K"]) for r in disp if r["status"] == "Ok"])),
                         "fallback_rate": 1 - sum(r["source"] == "surrogate" for r in disp) / len(disp),
                         "dispatcher_sources": {s: sum(r["source"] == s for r in disp) for s in set(r["source"] for r in disp)}}
-        print(f"[{tag}] surrogate MAE {results[tag]['surrogate_mae_K']:.2f} K; dispatcher MAE {results[tag]['dispatcher_mae_K']:.2f} K, fallback {results[tag]['fallback_rate']:.0%}")
+        print(f"[{vtag}] surrogate MAE {results[vtag]['surrogate_mae_K']:.2f} K; dispatcher MAE {results[vtag]['dispatcher_mae_K']:.2f} K, fallback {results[vtag]['fallback_rate']:.0%}")
     ftm = json.load(open(os.path.join(ft, "metrics.json")))
-    doc = {"version": version, "shots_per_case": a.shots, "finetune": {k: ftm[k] for k in ("n_finetune", "n_holdout", "epochs", "lr", "finetune_time_s", "before", "after")},
+    doc = {"version": version, "tag": tag, "shots_per_case": a.shots, "replay": ftm.get("replay", 0), "finetune": {k: ftm[k] for k in ("n_finetune", "n_holdout", "epochs", "lr", "finetune_time_s", "before", "after")},
            "parity_max_abs_diff_K": worst, "bank": {"v1.0": int(bank.shape[0]), "v1.1": int(bank.shape[0] + new.shape[0])},
            "conformal_v1.1": {"n_calibration": len(calib), "overall": conf["overall"]}, "holdout50_cpp": results,
            "note": "dispatcher chain in --compare is surrogate -> FD reference (no HotSpot) so the v1.0 fallback answers come from the FD solver"}
-    json.dump(doc, open(os.path.join(REPO, "docs", "results", f"lifecycle_fewshot_k{a.shots}.json"), "w"), indent=2)
-    print("-> docs/results/lifecycle_fewshot_k%d.json" % a.shots)
+    json.dump(doc, open(os.path.join(REPO, "docs", "results", f"lifecycle_fewshot_{tag}.json"), "w"), indent=2)
+    print(f"-> docs/results/lifecycle_fewshot_{tag}.json")
 
 
 if __name__ == "__main__":

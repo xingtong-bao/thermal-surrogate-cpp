@@ -55,7 +55,7 @@ git clone https://github.com/xingtong-bao/thermal-surrogate-cpp && cd thermal-su
 gh release download models-v1 --dir models          # model.onnx + model_dynamic.onnx (20 MB each)
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
-ctest --test-dir build --output-on-failure        # 34 tests, ~20 s
+ctest --test-dir build --output-on-failure        # 36 tests, ~20 s
 ./build/ts_demo --info                            # runtime version + model IO
 ./build/c_caller models contract tests/fixtures/sample_input.npy   # C ABI example
 ```
@@ -144,6 +144,46 @@ package configuration is not public)
 [error_buckets_notes.md](docs/results/error_buckets_notes.md) and
 [backend_comparison_notes.md](docs/results/backend_comparison_notes.md).
 
+## Using it inside a design-exploration loop (stage 8)
+
+Four additions after a review from the perspective of a design-space
+exploration product, where every candidate design is new and the optimiser
+must know when to trust the surrogate:
+
+- **Solver-verified claims.** The power-sensitivity finding was re-measured
+  with HotSpot on the same perturbed inputs: the solver is linear to 0.2 %,
+  the surrogate reproduces a median 0.28 (seen chips) / 0.08 (unseen) of its
+  response. [power_gain_verification.json](docs/results/power_gain_verification.json)
+- **Per-prediction error bounds.** Split conformal prediction calibrated on
+  the validation split gives every surrogate answer a 90 % bound on its field
+  MAE and Tmax error, conditioned on the predicted rise (1.6 K for cool
+  designs to 3.7 K for hot ones). Coverage on the held-out subset 1.00.
+  Fields `mae_bound_90_K`, `tmax_err_bound_90_K` in C++, C and Python.
+  [conformal_notes.md](docs/results/conformal_notes.md)
+- **Exploration demo.** A cooling sweep (12 designs) answered by the surrogate
+  in 0.43 s versus 32.5 s for HotSpot, but with twice the solver's slope, so
+  the chosen cooler differs. Cooling what-ifs, like power what-ifs, belong to
+  the solver. [exploration_notes.md](docs/results/exploration_notes.md)
+- **Solver-to-model lifecycle.** Every solver answer is a training sample.
+  Fine-tuning the surrogate on 10 / 50 samples per unseen chip takes its
+  error on those chips from 17.1 K to 5.6 / 2.8 K, and `tools/lifecycle_v11.py`
+  pushes the result through the same gates as v1.0 (export, parity, bank,
+  conformal recalibration, C++ evaluation). The gates then caught what a
+  leaderboard would not: the fine-tuned models score 3.7–5.8 K on the
+  *original* chips, failing the 2.01 K contract gate (catastrophic
+  forgetting). Rehearsal with 250 training samples brings that back to
+  1.45 K and passes two of the three gates; the hotspot gate still fails by
+  25 %, so no v1.1 replaces v1.0. [lifecycle_notes.md](docs/results/lifecycle_notes.md)
+
+![exploration](docs/results/exploration_demo.png)
+
+| lifecycle step | v1.0 | v1.1 (50 shots) | v1.1 (50 shots + replay 250) |
+|---|---|---|---|
+| unseen chips, MAE | 15.8 K | 2.6 K | 2.8 K |
+| seen chips, MAE / gate 2.01 K | 1.05 K pass | 5.8 K **fail** | 1.45 K pass |
+| seen chips, Tmax median / gate 0.95 K | pass | — | 1.19 K **fail** |
+| verdict | released | blocked | blocked |
+
 ## Beyond 64×64
 
 The exported graph is fully convolutional; `model_dynamic.onnx` runs any
@@ -194,7 +234,7 @@ the pinned ONNX Runtime package.
 
 ## Tests
 
-`ctest` runs 34 tests: `Skeleton.*` (runtime and model IO match the
+`ctest` runs 36 tests: `Skeleton.*` (runtime and model IO match the
 contract), `Predictor.*` (construction, rejection without exceptions, parity
 with the Python runtime, zero-copy and batch paths), `Validator.*` (each
 status code, both fixtures, feature extraction equals Python),
@@ -202,7 +242,8 @@ status code, both fixtures, feature extraction equals Python),
 `FdSolver.*` (convergence, exact ambient shift, power gain 1, fallback),
 `ExternalBackend.*` (protocol, exit codes, timeout kill),
 `Concurrency.*`, `AccuracyGate.*` (contract gates on the committed
-50-sample subset; status spellings equal the schema enum).
+50-sample subset; status spellings equal the schema enum), `Conformal.*`
+(bounds load, widen with the rise, and cover the held-out subset).
 
 ## Layout
 
@@ -214,6 +255,7 @@ bench/           latency, throughput, dynamic size
 tests/           GoogleTest suite + fixtures (parity pairs, eval50 subset, validator expectations)
 tools/           Python: asset fetch, baseline, statistics, analyses, export, parity, HotSpot wrapper
 models/          metadata.json, config_bank.npy, fd_solver_params.json (ONNX files via release)
+models_v1.1_*/   fine-tuned candidates with their own metadata, bank and conformal table (stage 8)
 docs/results/    every measured number, with notes; docs/failure_analysis.md; docs/integration_design.md
 ```
 

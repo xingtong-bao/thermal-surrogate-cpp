@@ -1,0 +1,89 @@
+{
+  "version": "level4-unet-ft-level5-k50_replay250-1.1.0",
+  "shots_per_case": 50,
+  "finetune": {
+    "n_finetune": 500,
+    "n_holdout": 2500,
+    "epochs": 50,
+    "lr": 0.0001,
+    "finetune_time_s": 2034.5962491035461,
+    "before": {
+      "mae_K": 17.093908736154436,
+      "mae_p95_K": 56.774794886261205,
+      "tmax_abs_err_mean_K": 28.07831483154297,
+      "per_case_mae_K": {
+        "Case16": 28.04800079038739,
+        "Case17": 11.622907704353333,
+        "Case18": 33.20518934068084,
+        "Case19": 7.456522680774331,
+        "Case20": 5.136923164576292
+      }
+    },
+    "after": {
+      "mae_K": 2.8662957544624805,
+      "mae_p95_K": 7.393477820605034,
+      "tmax_abs_err_mean_K": 4.547373937988281,
+      "per_case_mae_K": {
+        "Case16": 2.56419057713449,
+        "Case17": 2.9930739697963,
+        "Case18": 4.89934867490828,
+        "Case19": 2.2278768366724253,
+        "Case20": 1.6469887138009072
+      }
+    }
+  },
+  "parity_max_abs_diff_K": 0.000274658203125,
+  "bank": {
+    "v1.0": 10800,
+    "v1.1": 11050
+  },
+  "conformal_v1.1": {
+    "n_calibration": 2250,
+    "overall": {
+      "mae_q90_K": 4.6759796142578125,
+      "tmax_err_q90_K": 9.370147705078125,
+      "mae_q95_K": 6.852228164672852,
+      "tmax_err_q95_K": 15.81396484375
+    }
+  },
+  "holdout50_cpp": {
+    "v1.0": {
+      "surrogate_mae_K": 15.751001200000001,
+      "dispatcher_mae_K": 19.6823108,
+      "fallback_rate": 1.0,
+      "dispatcher_sources": {
+        "reference_inprocess": 50
+      }
+    },
+    "v1.1": {
+      "surrogate_mae_K": 2.8291974000000004,
+      "dispatcher_mae_K": 3.7572896000000005,
+      "fallback_rate": 0.24,
+      "dispatcher_sources": {
+        "reference_inprocess": 12,
+        "surrogate": 38
+      }
+    }
+  },
+  "note": "dispatcher chain in --compare is surrogate -> FD reference (no HotSpot) so the v1.0 fallback answers come from the FD solver",
+  "tag": "k50_replay250",
+  "replay": 250,
+  "level4_eval50_cpp": {
+    "surrogate_mae_K": 1.44807832,
+    "surrogate_mae_p95_K": 2.10343,
+    "tmax_abs_err_median_K": 1.19373,
+    "gates": {
+      "field_mae_K": 2.012188324971994,
+      "worst5pct_per_sample_mae_K": 3.7921820611879227,
+      "tmax_abs_err_median_K": 0.9517745971679689,
+      "factor": 1.1
+    },
+    "passes": {
+      "field_mae": true,
+      "worst5pct": true,
+      "tmax_median": false
+    },
+    "passes_all": false,
+    "v1.0_reference_mae_K": 1.05
+  }
+}

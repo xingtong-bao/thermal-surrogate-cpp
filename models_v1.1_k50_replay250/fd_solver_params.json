@@ -1,0 +1,422 @@
+{
+  "alpha": 1.8951889048342998,
+  "beta": 0.01325325127420865,
+  "calibrated_on": {
+    "inputs": "train20_inputs.npy",
+    "n": 20,
+    "split": "level4 train"
+  },
+  "g_v_w_m2k": 15848.93192461114,
+  "max_iter": 20000,
+  "model": "lumped sink P*(alpha r + beta) + 2-D local conduction with vertical loss g_v; see include/thermal_surrogate/fd_solver.h",
+  "ms_per_solve": 33.0040604,
+  "omega": 1.8,
+  "search_grid": [
+    {
+      "g_v_w_m2k": 100.0,
+      "mae_K": 2732.9843490310013,
+      "refine": false,
+      "thickness_m": 0.0001
+    },
+    {
+      "g_v_w_m2k": 316.22776601683796,
+      "mae_K": 853.7541530944407,
+      "refine": false,
+      "thickness_m": 0.0001
+    },
+    {
+      "g_v_w_m2k": 1000.0,
+      "mae_K": 262.49466798566283,
+      "refine": false,
+      "thickness_m": 0.0001
+    },
+    {
+      "g_v_w_m2k": 3162.2776601683795,
+      "mae_K": 77.80504040457308,
+      "refine": false,
+      "thickness_m": 0.0001
+    },
+    {
+      "g_v_w_m2k": 10000.0,
+      "mae_K": 22.776264878734946,
+      "refine": false,
+      "thickness_m": 0.0001
+    },
+    {
+      "g_v_w_m2k": 31622.776601683792,
+      "mae_K": 16.59938995502889,
+      "refine": false,
+      "thickness_m": 0.0001
+    },
+    {
+      "g_v_w_m2k": 100.0,
+      "mae_K": 2731.76275498271,
+      "refine": false,
+      "thickness_m": 0.00031622776601683794
+    },
+    {
+      "g_v_w_m2k": 316.22776601683796,
+      "mae_K": 851.1747088417411,
+      "refine": false,
+      "thickness_m": 0.00031622776601683794
+    },
+    {
+      "g_v_w_m2k": 1000.0,
+      "mae_K": 259.90685130283237,
+      "refine": false,
+      "thickness_m": 0.00031622776601683794
+    },
+    {
+      "g_v_w_m2k": 3162.2776601683795,
+      "mae_K": 76.20449606701732,
+      "refine": false,
+      "thickness_m": 0.00031622776601683794
+    },
+    {
+      "g_v_w_m2k": 10000.0,
+      "mae_K": 22.193928124383092,
+      "refine": false,
+      "thickness_m": 0.00031622776601683794
+    },
+    {
+      "g_v_w_m2k": 31622.776601683792,
+      "mae_K": 16.548443581163884,
+      "refine": false,
+      "thickness_m": 0.00031622776601683794
+    },
+    {
+      "g_v_w_m2k": 100.0,
+      "mae_K": 2731.5145607747136,
+      "refine": false,
+      "thickness_m": 0.001
+    },
+    {
+      "g_v_w_m2k": 316.22776601683796,
+      "mae_K": 849.3669248003513,
+      "refine": false,
+      "thickness_m": 0.001
+    },
+    {
+      "g_v_w_m2k": 1000.0,
+      "mae_K": 257.1193742729723,
+      "refine": false,
+      "thickness_m": 0.001
+    },
+    {
+      "g_v_w_m2k": 3162.2776601683795,
+      "mae_K": 74.07739517278969,
+      "refine": false,
+      "thickness_m": 0.001
+    },
+    {
+      "g_v_w_m2k": 10000.0,
+      "mae_K": 21.210106246173382,
+      "refine": false,
+      "thickness_m": 0.001
+    },
+    {
+      "g_v_w_m2k": 31622.776601683792,
+      "mae_K": 16.45526803135872,
+      "refine": false,
+      "thickness_m": 0.001
+    },
+    {
+      "g_v_w_m2k": 100.0,
+      "mae_K": 2731.453969841078,
+      "refine": false,
+      "thickness_m": 0.0031622776601683794
+    },
+    {
+      "g_v_w_m2k": 316.22776601683796,
+      "mae_K": 848.7986852332949,
+      "refine": false,
+      "thickness_m": 0.0031622776601683794
+    },
+    {
+      "g_v_w_m2k": 1000.0,
+      "mae_K": 254.90606503412127,
+      "refine": false,
+      "thickness_m": 0.0031622776601683794
+    },
+    {
+      "g_v_w_m2k": 3162.2776601683795,
+      "mae_K": 71.36072839535773,
+      "refine": false,
+      "thickness_m": 0.0031622776601683794
+    },
+    {
+      "g_v_w_m2k": 10000.0,
+      "mae_K": 19.790849412977696,
+      "refine": false,
+      "thickness_m": 0.0031622776601683794
+    },
+    {
+      "g_v_w_m2k": 31622.776601683792,
+      "mae_K": 16.30619328133762,
+      "refine": false,
+      "thickness_m": 0.0031622776601683794
+    },
+    {
+      "g_v_w_m2k": 100.0,
+      "mae_K": null,
+      "refine": false,
+      "thickness_m": 0.01
+    },
+    {
+      "g_v_w_m2k": 316.22776601683796,
+      "mae_K": 848.7295399107039,
+      "refine": false,
+      "thickness_m": 0.01
+    },
+    {
+      "g_v_w_m2k": 1000.0,
+      "mae_K": 253.6192940786481,
+      "refine": false,
+      "thickness_m": 0.01
+    },
+    {
+      "g_v_w_m2k": 3162.2776601683795,
+      "mae_K": 68.75276882797479,
+      "refine": false,
+      "thickness_m": 0.01
+    },
+    {
+      "g_v_w_m2k": 10000.0,
+      "mae_K": 18.106129022315145,
+      "refine": false,
+      "thickness_m": 0.01
+    },
+    {
+      "g_v_w_m2k": 31622.776601683792,
+      "mae_K": 16.101534694805743,
+      "refine": false,
+      "thickness_m": 0.01
+    },
+    {
+      "g_v_w_m2k": 100.0,
+      "mae_K": null,
+      "refine": false,
+      "thickness_m": 0.03162277660168379
+    },
+    {
+      "g_v_w_m2k": 316.22776601683796,
+      "mae_K": null,
+      "refine": false,
+      "thickness_m": 0.03162277660168379
+    },
+    {
+      "g_v_w_m2k": 1000.0,
+      "mae_K": 253.35980637595057,
+      "refine": false,
+      "thickness_m": 0.03162277660168379
+    },
+    {
+      "g_v_w_m2k": 3162.2776601683795,
+      "mae_K": 66.76854831539094,
+      "refine": false,
+      "thickness_m": 0.03162277660168379
+    },
+    {
+      "g_v_w_m2k": 10000.0,
+      "mae_K": 16.340666595846415,
+      "refine": false,
+      "thickness_m": 0.03162277660168379
+    },
+    {
+      "g_v_w_m2k": 31622.776601683792,
+      "mae_K": 15.887517195567488,
+      "refine": false,
+      "thickness_m": 0.03162277660168379
+    },
+    {
+      "g_v_w_m2k": 100.0,
+      "mae_K": null,
+      "refine": false,
+      "thickness_m": 0.1
+    },
+    {
+      "g_v_w_m2k": 316.22776601683796,
+      "mae_K": null,
+      "refine": false,
+      "thickness_m": 0.1
+    },
+    {
+      "g_v_w_m2k": 1000.0,
+      "mae_K": null,
+      "refine": false,
+      "thickness_m": 0.1
+    },
+    {
+      "g_v_w_m2k": 3162.2776601683795,
+      "mae_K": 65.37626634091139,
+      "refine": false,
+      "thickness_m": 0.1
+    },
+    {
+      "g_v_w_m2k": 10000.0,
+      "mae_K": 14.995042711123824,
+      "refine": false,
+      "thickness_m": 0.1
+    },
+    {
+      "g_v_w_m2k": 31622.776601683792,
+      "mae_K": 15.70913795568049,
+      "refine": false,
+      "thickness_m": 0.1
+    },
+    {
+      "g_v_w_m2k": 3981.0717055349733,
+      "mae_K": 49.580752277374266,
+      "refine": true,
+      "thickness_m": 0.039810717055349734
+    },
+    {
+      "g_v_w_m2k": 6309.573444801937,
+      "mae_K": 26.847839986532925,
+      "refine": true,
+      "thickness_m": 0.039810717055349734
+    },
+    {
+      "g_v_w_m2k": 10000.0,
+      "mae_K": 16.017373195290567,
+      "refine": true,
+      "thickness_m": 0.039810717055349734
+    },
+    {
+      "g_v_w_m2k": 15848.93192461114,
+      "mae_K": 13.87315798662603,
+      "refine": true,
+      "thickness_m": 0.039810717055349734
+    },
+    {
+      "g_v_w_m2k": 25118.864315095823,
+      "mae_K": 14.979309698194266,
+      "refine": true,
+      "thickness_m": 0.039810717055349734
+    },
+    {
+      "g_v_w_m2k": 3981.0717055349733,
+      "mae_K": 48.88000457622111,
+      "refine": true,
+      "thickness_m": 0.06309573444801933
+    },
+    {
+      "g_v_w_m2k": 6309.573444801937,
+      "mae_K": 26.05593427307904,
+      "refine": true,
+      "thickness_m": 0.06309573444801933
+    },
+    {
+      "g_v_w_m2k": 10000.0,
+      "mae_K": 15.446518224850298,
+      "refine": true,
+      "thickness_m": 0.06309573444801933
+    },
+    {
+      "g_v_w_m2k": 15848.93192461114,
+      "mae_K": 13.588592528179287,
+      "refine": true,
+      "thickness_m": 0.06309573444801933
+    },
+    {
+      "g_v_w_m2k": 25118.864315095823,
+      "mae_K": 14.853351562097668,
+      "refine": true,
+      "thickness_m": 0.06309573444801933
+    },
+    {
+      "g_v_w_m2k": 3981.0717055349733,
+      "mae_K": 48.21986559145152,
+      "refine": true,
+      "thickness_m": 0.1
+    },
+    {
+      "g_v_w_m2k": 6309.573444801937,
+      "mae_K": 25.361873441934584,
+      "refine": true,
+      "thickness_m": 0.1
+    },
+    {
+      "g_v_w_m2k": 10000.0,
+      "mae_K": 14.995042711123824,
+      "refine": true,
+      "thickness_m": 0.1
+    },
+    {
+      "g_v_w_m2k": 15848.93192461114,
+      "mae_K": 13.325257562100887,
+      "refine": true,
+      "thickness_m": 0.1
+    },
+    {
+      "g_v_w_m2k": 25118.864315095823,
+      "mae_K": 14.73141569495201,
+      "refine": true,
+      "thickness_m": 0.1
+    },
+    {
+      "g_v_w_m2k": 3981.0717055349733,
+      "mae_K": 47.67238031215966,
+      "refine": true,
+      "thickness_m": 0.15848931924611134
+    },
+    {
+      "g_v_w_m2k": 6309.573444801937,
+      "mae_K": 24.742039065435527,
+      "refine": true,
+      "thickness_m": 0.15848931924611134
+    },
+    {
+      "g_v_w_m2k": 10000.0,
+      "mae_K": 14.666587003320455,
+      "refine": true,
+      "thickness_m": 0.15848931924611134
+    },
+    {
+      "g_v_w_m2k": 15848.93192461114,
+      "mae_K": 13.128761958703398,
+      "refine": true,
+      "thickness_m": 0.15848931924611134
+    },
+    {
+      "g_v_w_m2k": 25118.864315095823,
+      "mae_K": 14.622189179062843,
+      "refine": true,
+      "thickness_m": 0.15848931924611134
+    },
+    {
+      "g_v_w_m2k": 3981.0717055349733,
+      "mae_K": 47.297257548943165,
+      "refine": true,
+      "thickness_m": 0.25118864315095796
+    },
+    {
+      "g_v_w_m2k": 6309.573444801937,
+      "mae_K": 24.164791993424295,
+      "refine": true,
+      "thickness_m": 0.25118864315095796
+    },
+    {
+      "g_v_w_m2k": 10000.0,
+      "mae_K": 14.437158995866776,
+      "refine": true,
+      "thickness_m": 0.25118864315095796
+    },
+    {
+      "g_v_w_m2k": 15848.93192461114,
+      "mae_K": 12.997071263194083,
+      "refine": true,
+      "thickness_m": 0.25118864315095796
+    },
+    {
+      "g_v_w_m2k": 25118.864315095823,
+      "mae_K": 14.536472599953413,
+      "refine": true,
+      "thickness_m": 0.25118864315095796
+    }
+  ],
+  "thickness_m": 0.25118864315095796,
+  "tol_K": 0.0001,
+  "train_mae_K": 12.466592300310731,
+  "train_tmax_abs_err_K": 18.286819458007813
+}

@@ -39,6 +39,8 @@ def main():
     p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--out", required=True, help="directory for model.pt, metrics.json, shots_inputs.npy")
     p.add_argument("--device", default="cpu")
+    p.add_argument("--replay", type=int, default=0,
+                   help="rehearsal: mix this many level4 TRAINING samples into the fine-tuning set so the original chips are not forgotten")
     a = p.parse_args()
     bench = os.path.abspath(a.bench)
     out = os.path.abspath(a.out)
@@ -82,8 +84,17 @@ def main():
     before = evaluate()
     print(f"[before] holdout MAE {before['mae_K']:.3f} K, Tmax err {before['tmax_abs_err_mean_K']:.3f} K, per case {dict((k, round(v, 2)) for k, v in before['per_case_mae_K'].items())}")
 
-    xn = x_norm.forward(x_all[ft_idx]).squeeze(-2).permute(0, 3, 1, 2).contiguous()      # (n,P,X,Y)
-    yn = y_norm.forward(y_all[ft_idx]).squeeze(-1)                                      # (n,X,Y)
+    x_ft, y_ft = x_all[ft_idx], y_all[ft_idx]
+    if a.replay > 0:
+        # Rehearsal against catastrophic forgetting: evenly spaced samples from the
+        # level4 TRAINING split (never its test split) join the fine-tuning set.
+        x4, y4, _, _ = load_mat_pair("datasets/level4_steady")
+        n_train4 = int(int(x4.shape[0] * 0.8) * 0.9)
+        rep = list(range(0, n_train4, max(1, n_train4 // a.replay)))[:a.replay]
+        x_ft = torch.cat([x_ft, x4[rep]]); y_ft = torch.cat([y_ft, y4[rep]])
+        print(f"[replay] + {len(rep)} level4 training samples -> fine-tuning set {x_ft.shape[0]}")
+    xn = x_norm.forward(x_ft).squeeze(-2).permute(0, 3, 1, 2).contiguous()      # (n,P,X,Y)
+    yn = y_norm.forward(y_ft).squeeze(-1)                                      # (n,X,Y)
     loader = torch.utils.data.DataLoader(torch.utils.data.TensorDataset(xn, yn), batch_size=20, shuffle=True)
     opt = torch.optim.Adam(model.parameters(), lr=a.lr, weight_decay=1e-4, foreach=False)
     t0 = time.time()
@@ -110,7 +121,7 @@ def main():
     save_checkpoint(os.path.join(out, "model.pt"), model.cpu(), x_norm, y_norm,
                     {"finetuned_from": "level4_UNet", "shots": a.shots, "epochs": a.epochs, "lr": a.lr})
     np.save(os.path.join(out, "shots_inputs.npy"), np.ascontiguousarray(x_all[ft_idx].numpy(), dtype=np.float32))
-    json.dump({"shots": a.shots, "epochs": a.epochs, "lr": a.lr, "n_finetune": len(ft_idx), "n_holdout": len(ho_idx),
+    json.dump({"shots": a.shots, "epochs": a.epochs, "lr": a.lr, "replay": a.replay, "n_finetune": int(xn.shape[0]), "n_holdout": len(ho_idx),
                "finetune_time_s": ft_time, "before": before, "after": after, "holdout_indices": ho_idx},
               open(os.path.join(out, "metrics.json"), "w"), indent=2)
     print("->", out)
