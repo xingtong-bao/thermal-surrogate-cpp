@@ -4,102 +4,97 @@
 ![C++17](https://img.shields.io/badge/C%2B%2B-17-blue)
 ![ONNX Runtime 1.23.2](https://img.shields.io/badge/ONNX%20Runtime-1.23.2-lightgrey)
 ![License MIT](https://img.shields.io/badge/license-MIT-green)
-[中文版 README](README_CH.md)
+[中文](README_CH.md)
 
-**A neural thermal surrogate, made safe to put inside a chip-design tool.**
-This repository takes a published model (the IC-ThermBench level4 U-Net:
-7 input maps → a 64×64 steady-state temperature field) and builds, measures
-and tests everything a product needs around it: a written interface
-contract, input validation, out-of-distribution detection, per-prediction
-error bounds, automatic fallback to a physics solver, a solver-to-model
-update lifecycle with release gates, a C++17 library with C and Python
-bindings, and a reproducible record of every number. Every figure below
-links to the file that holds it.
+A C++17 inference library for neural chip-thermal surrogates, built around
+the published IC-ThermBench level4 U-Net (7 input maps → 64×64 steady-state
+temperature field). The library validates inputs against a written
+contract, detects out-of-distribution designs, attaches a calibrated error
+bound to every prediction, falls back to a physics solver when the model
+cannot be trusted, and ships with the tooling to update, gate and release a
+new model version. Every number in this file is measured in this
+repository and links to the file that holds it.
 
 ![architecture](docs/figures/architecture.png)
 
-## If you have five minutes
+## Features
 
-| what a design-exploration product needs from a surrogate | what this repository shows | file |
+- **Contract-driven validation** — shape, dtype, per-channel training range
+  and a configuration-novelty check (rules I1–I5), with status codes
+  mirrored in C++, JSON Schema and the C ABI. [contract/](contract/)
+- **Fallback dispatcher** — surrogate → external solver (HotSpot subprocess
+  with timeout) → in-process finite-difference solver; every answer reports
+  which backend produced it. [docs/integration_design.md](docs/integration_design.md)
+- **Per-prediction error bounds** — split-conformal 90 % bounds on field
+  MAE and hotspot error, conditioned on the predicted temperature rise.
+- **Physics-exact what-ifs** — whole-chip power scaling answered by the
+  linearity of conduction, not by the model.
+- **Model lifecycle** — scripts to fine-tune on solver answers or augmented
+  data, export to ONNX, check parity, recalibrate bounds and run the release
+  gates on the full test split.
+- **Model-agnostic** — U-Net, U-FNO (spectral layers exported as matrix
+  products) and an ensemble load through the same API.
+- **Bindings** — C ABI with an opaque handle (`ts_c_api.h`), pybind11 module.
+- **Engineering** — zero-copy input, caller-owned output, thread-safe
+  prediction (ThreadSanitizer-checked), hash-pinned dependencies, 38 tests,
+  CI on Linux.
+
+## Results
+
+Measured on Apple M4 (4 P + 6 E cores, 16 GB), ONNX Runtime 1.23.2 CPU.
+"Seen chips" = the level4 test split (10 chip families in training);
+"unseen chips" = the level5 set (5 families never trained on).
+
+**Surrogate alone**
+
+| metric | value | file |
 |---|---|---|
-| **fast** | one 64×64 field in **22–30 ms** on a laptop CPU; the physics solver needs 2–3 s | [latency_single.json](docs/results/latency_single.json) |
-| **accurate where it has seen data** | **1.05 K** MAE on the committed 50-sample test subset, 1.83 K on all 3 000 (authors: 1.83 K); reproduced to 5e-4 K | [baseline_notes.md](docs/results/baseline_notes.md) |
-| **knows what it does not know** | a 6-number configuration-novelty guard rejects **100 %** of unseen chips at 1 % false rejects, where a per-channel range check catches 20 % | [extrapolation_notes.md](docs/results/extrapolation_notes.md) |
-| **says how sure it is** | split-conformal **90 % bound per prediction**, 1.6–3.7 K by design temperature; held-out coverage 1.00 | [conformal_notes.md](docs/results/conformal_notes.md) |
-| **never returns a confident wrong answer** | dispatcher: surrogate → external solver (HotSpot) → in-process solver; unseen chips **14.8 K → 3.4 K**; blended 2.2 K vs 7.9 K surrogate-only | [backend_comparison_notes.md](docs/results/backend_comparison_notes.md) |
-| **learns from every solver run** | 50 solver answers per unseen chip: **17.1 K → 2.8 K**; the release gates then caught catastrophic forgetting (1.05 → 5.8 K on old chips) before it could ship | [lifecycle_notes.md](docs/results/lifecycle_notes.md) |
-| **answers what-ifs correctly** | whole-chip power scaling by physics, gain exactly 1; per-chiplet sensitivity raised from 0.1 to **0.85** by physics-informed augmentation (trade-off measured, gated) | [power_aug_notes.md](docs/results/power_aug_notes.md) |
-| **model-agnostic integration** | U-Net, U-FNO (FFT layers exported as matrix products) and their ensemble run through the same contract, validator and gates; U-FNO 0.60 K at 760 ms | [model_swap_notes.md](docs/results/model_swap_notes.md) |
-| **engineering** | bit-identical to the Python export; 8 threads ThreadSanitizer-clean; 38 tests incl. the contract gates; CI on Linux; C ABI; pybind11 | [parity_cpp.json](docs/results/parity_cpp.json), [concurrency.json](docs/results/concurrency.json) |
+| MAE, seen chips, 50-sample committed subset / full 3 000 | 1.05 K / 1.83 K (authors: 1.83 K) | [baseline_notes.md](docs/results/baseline_notes.md) |
+| MAE, unseen chips (50) | 14.8 K | [backend_comparison.csv](docs/results/backend_comparison.csv) |
+| contract gates (baseline × 1.1): MAE / worst-5 % / hotspot median | 2.012 / 3.792 / 0.952 K | [contract.md §4](contract/contract.md) |
+| latency p50, 1 / 4 / 8 threads | 79.9 / 30.3 / 27.2 ms | [latency_single.json](docs/results/latency_single.json) |
+| throughput, batch 1 / 8 / 32 / 64 | 48.8 / 33.8 / 34.3 / 34.6 samples/s | [throughput.json](docs/results/throughput.json) |
+| larger grids 128² / 256² / 512² | 117 ms / 468 ms / 1.87 s (7.14 ms per 1 k cells) | [dynamic_size.csv](docs/results/dynamic_size.csv) |
+| PyTorch ↔ ONNX Runtime (100 samples) / ONNX Runtime Python ↔ C++ (10) | max 8.2e-4 K / 0 K | [parity_notes.md](docs/results/parity_notes.md) |
+
+**Guards and fallback**
+
+| metric | value | file |
+|---|---|---|
+| novelty guard (I5): unseen chips rejected / seen chips falsely rejected | 100 % / 1 % | [layout_novelty.json](docs/results/layout_novelty.json) |
+| per-channel range check (I4) alone: unseen chips rejected | 20 % | [extrapolation_notes.md](docs/results/extrapolation_notes.md) |
+| conformal 90 % MAE bound (by predicted rise) / held-out coverage | 1.6–3.7 K / 1.00 | [conformal_notes.md](docs/results/conformal_notes.md) |
+| dispatcher with HotSpot behind it, unseen chips MAE | 3.4 K (surrogate alone 14.8 K) | [backend_comparison_notes.md](docs/results/backend_comparison_notes.md) |
+| blended MAE on a 50/50 seen/unseen stream | 2.2 K (surrogate alone 7.9 K) | [fallback_curve.json](docs/results/fallback_curve.json) |
+| reference solvers: FD (in-process) / HotSpot (subprocess), seen chips MAE, latency | 12.8 K, 34 ms / 13.4 K, 2.7 s | [fd_solver_validation.json](docs/results/fd_solver_validation.json), [hotspot_validation.json](docs/results/hotspot_validation.json) |
+| 8 threads × 100 predictions on one session | bit-identical, TSan clean | [concurrency.json](docs/results/concurrency.json) |
+
+**Model variants through the same library**
+
+| model | seen chips MAE / hotspot median | unseen chips MAE | latency p50 (4 threads) | file |
+|---|---|---|---|---|
+| U-Net (shipped) | 1.05 / 0.60 K | 14.8 K | 30 ms | [models/metadata.json](models/metadata.json) |
+| U-FNO | 0.60 / 0.27 K | 24.6 K | 760 ms | [model_swap_notes.md](docs/results/model_swap_notes.md) |
+| U-Net + U-FNO ensemble | 0.69 / 0.27 K | 18.4 K | 745 ms | [ensemble_spread.json](docs/results/ensemble_spread.json) |
+
+**Model updates and release gates** (full 3 000-sample split; "pass" = all three contract gates)
+
+| candidate | purpose | unseen chips MAE | seen chips MAE | hotspot median | gates | file |
+|---|---|---|---|---|---|---|
+| v1.0 (shipped) | — | 15.8 K | 1.83 K | 0.87 K | pass | [baseline_unet_level4.json](docs/results/baseline_unet_level4.json) |
+| v1.1, 50 solver answers per unseen chip | adapt to new chips | 2.6 K | 5.8 K | — | fail (forgetting) | [lifecycle_notes.md](docs/results/lifecycle_notes.md) |
+| v1.1 + replay of 250 training samples | same, without forgetting | 2.8 K | 1.45 K | 1.19 K | fail (hotspot) | same |
+| v1.4, power augmentation ±15 % | power sensitivity 0.1 → 0.85 | 13.4 K | 2.07 K | 1.09 K | fail (MAE, hotspot) | [power_aug_notes.md](docs/results/power_aug_notes.md) |
+
+**Characterisation of the shipped model** — power-sensitivity gain 0.1–0.3
+of the solver's response (HotSpot-verified), cooling-sensitivity slope 2×
+the solver's, hotspot location exact in 3.7 % of samples, error growing with
+power density and temperature rise: [docs/failure_analysis.md](docs/failure_analysis.md),
+[sensitivity_notes.md](docs/results/sensitivity_notes.md),
+[error_buckets_notes.md](docs/results/error_buckets_notes.md),
+[exploration_notes.md](docs/results/exploration_notes.md).
 
 ![results](docs/figures/results_summary.png)
-
-**Does any of this prove the AI approach does not work?** No. It shows that
-*this* public model is reliable inside its training distribution and
-unreliable outside it, that the boundary can be detected automatically,
-that the solver covers the outside, and that the outside shrinks with data
-the product generates anyway. That is the shape of a working system; the
-contribution here is measuring every edge of it and building the machinery
-that keeps a model inside its edges.
-
-## Where the model stops, and what that asks of the data
-
-Each limit was measured, traced to its cause in the training data, and
-turned into a requirement for how a production surrogate's data must be
-generated. None is a limit of the approach.
-
-| measured limit | cause in the data | requirement for a product |
-|---|---|---|
-| per-chiplet power what-ifs: 0.1–0.3 of the true hotspot change (solver-verified) | 14 discrete power values, each tied to a layout; the model never saw "same chip, other power" | sample power continuously per chiplet; or augment with the exact linear response (done here: gain 0.85) |
-| unseen chips: 14 K error even when every input is in range | 10 chips in training; the model learned ten layouts, not conduction | generate data over the design space; let every solver run extend the training set and the novelty bank |
-| cooling what-ifs: slope 2× the solver's | same | keep the solver in the loop for knob changes until the data covers them |
-| hotspot *location*: 3.7 % exact | flat fields near the maximum | report the temperature, not the cell |
-
-## Experiments that changed the design
-
-Stage 8 was run as a review from the perspective of a design-space
-exploration product, where every candidate design is new and the optimiser
-must know when to trust the surrogate. Each item is a script, a results
-file and a note.
-
-1. **Solver-verified physics claims.** The power-sensitivity finding was
-   re-measured with HotSpot on the same perturbed inputs: the solver is
-   linear to 0.2 %; the surrogate reproduces a median 0.28 (seen) / 0.08
-   (unseen) of its response. [power_gain_verification.json](docs/results/power_gain_verification.json)
-2. **Per-prediction error bounds** (split conformal, calibrated on the
-   validation split, conditioned on the predicted rise; fields
-   `mae_bound_90_K`, `tmax_err_bound_90_K` in C++, C and Python).
-3. **Solver-to-model lifecycle.** Fine-tune on solver answers → export →
-   parity → extend the novelty bank → recalibrate bounds → gates. The gates
-   blocked every candidate so far and said why (forgetting; a hotspot gate
-   missed by 0.13–0.25 K). The committed 50-sample subset turned out to be a
-   smoke gate; the full 3 000-sample split is the release gate.
-
-   | lifecycle step | v1.0 | 50 shots | 50 shots + replay 250 | power-aug (±15 %, early stop) |
-   |---|---|---|---|---|
-   | unseen chips MAE | 15.8 K | 2.6 K | 2.8 K | 13.4 K (not its goal) |
-   | power gain | 0.10 | — | — | **0.85** |
-   | seen chips MAE, gate 2.01 K (full split) | 1.83 pass | 5.8 **fail** | 1.45 pass | 2.07 **fail** |
-   | seen chips Tmax median, gate 0.95 K | 0.87 pass | — | 1.19 **fail** | 1.09 **fail** |
-   | verdict | released | blocked | blocked | candidate |
-
-4. **Exploration demo.** A cooling sweep answered in 0.43 s vs 32.5 s for
-   HotSpot, with twice the solver's slope: knob changes stay with the solver.
-   [exploration_notes.md](docs/results/exploration_notes.md)
-5. **Power what-ifs by physics.** Conduction is linear in power, so
-   `solve_power_scaled` answers "all chiplet powers × f" exactly from the
-   base prediction. [contract §9](contract/contract.md)
-6. **Model swap and ensemble.** U-FNO halves the in-support error at 25× the
-   CPU cost and is worse on unseen chips; the U-Net/U-FNO disagreement is
-   19× larger on unseen chips than on seen ones, a free uncertainty signal.
-
-   | model | seen chips MAE / Tmax median | unseen chips MAE | latency p50 (CPU, 4 threads) |
-   |---|---|---|---|
-   | U-Net (shipped) | 1.05 / 0.60 K | 14.8 K | **30 ms** |
-   | U-FNO | **0.60 / 0.27 K** | 24.6 K | 760 ms |
-   | ensemble | 0.69 / 0.27 K | 18.4 K | 745 ms |
-
-![power augmentation](docs/results/power_aug_gain.png)
 
 ## Quick start
 
@@ -116,10 +111,10 @@ ctest --test-dir build --output-on-failure        # 38 tests, ~20 s
 
 Without `gh`: download the two files from the
 [models-v1 release](https://github.com/xingtong-bao/thermal-surrogate-cpp/releases/tag/models-v1)
-and check them against the SHA-256 in [models/metadata.json](models/metadata.json),
-or regenerate them with [models/README.md](models/README.md).
+and verify them against [models/metadata.json](models/metadata.json), or
+regenerate them following [models/README.md](models/README.md).
 
-## Using the library
+## Usage
 
 ```cpp
 #include "thermal_surrogate/dispatcher.h"
@@ -137,151 +132,115 @@ dispatcher.set_conformal(ConformalTable("contract/conformal.json"));   // option
 Output out;                                   // never throws after construction
 dispatcher.solve(Input{data /* 64*64*1*7 floats */, kInputShape}, out);
 if (out.status.ok()) use(out.field, out.tmax, out.mae_bound_90_K, out.source, out.oob_flag);
-dispatcher.solve_power_scaled(Input{data, kInputShape}, 1.1, out);   // all chiplet powers +10 %, by physics
+dispatcher.solve_power_scaled(Input{data, kInputShape}, 1.1, out);   // all chiplet powers +10 %
 ```
 
-Input is a non-owning view of your buffer; output is yours (`predict_into`
-writes into a buffer you own). The C ABI (`ts_c_api.h`, opaque handle,
-integer codes) is in [examples/c_caller.c](examples/c_caller.c); the Python
-binding in [python/](python/). Rules for ownership, lifetime, threading,
-errors and versioning: [docs/integration_design.md](docs/integration_design.md).
+Input is a non-owning view of the caller's buffer; `predict_into` writes
+the field into a caller-owned buffer; `predict_batch` runs several samples
+through the dynamic-batch graph. C ABI: [examples/c_caller.c](examples/c_caller.c).
+Python: [python/test_binding.py](python/test_binding.py). Ownership,
+lifetime, threading, error and versioning rules:
+[docs/integration_design.md](docs/integration_design.md).
 
-## The contract
+## Contract
 
-[contract/contract.md](contract/contract.md) is the human-readable interface
-contract; [contract/schema.json](contract/schema.json) its machine-readable
-form (JSON Schema 2020-12, used by the Python checker and mirrored by the C++
-enums); [contract/stats.json](contract/stats.json) holds every measured
-constant the library reads; [contract/conformal.json](contract/conformal.json)
-the error-bound table. Every `TBD` the contract started with was filled by a
-later measurement, never by hand; the parity gate's three revisions are
-kept in §4 as a record.
+[contract/contract.md](contract/contract.md) defines the interface;
+[contract/schema.json](contract/schema.json) is its JSON Schema form;
+[contract/stats.json](contract/stats.json) and
+[contract/conformal.json](contract/conformal.json) hold the measured
+constants the library reads.
 
-| rule | what | on violation |
+| rule | condition | on violation |
 |---|---|---|
-| I1–I3 | float32, finite, shape (64,64,1,7), 7 channels | hard reject (`InvalidInput`, `ShapeMismatch`, `ChannelMismatch`) |
-| I4 | every channel inside its training range (`oob_scale` = 0) | `OutOfDistribution` → fallback |
+| I1–I3 | float32, finite, shape (64,64,1,7), 7 channels | `InvalidInput` / `ShapeMismatch` / `ChannelMismatch` (hard reject) |
+| I4 | every channel within its training range | `OutOfDistribution` → fallback |
 | I5 | configuration vector within 0.091 std-units of a training chip | `OutOfDistribution` → fallback |
-| F1–F4 | surrogate → external reference → in-process reference; skip failures; report the last | `source` says who answered |
-| §9 | whole-chip power scaling answered by physics | gain 1 by construction |
+| F1–F4 | backends tried in order; failures skipped; last failure reported | `source` names the answering backend |
+| §4 | accuracy gates on the full test split; the committed 50-sample subset is a smoke test | release blocked |
+| §9 | whole-chip power scaling computed from the base prediction | — |
 
-## Results
+## Architecture
 
-**Accuracy** ([baseline_notes.md](docs/results/baseline_notes.md),
-[parity_notes.md](docs/results/parity_notes.md))
+```
+Input (64,64,1,7)
+   │
+   ▼
+Validator ── I1–I3 reject ──► Status
+   │ I4 / I5
+   ▼
+Dispatcher ──► SurrogateBackend (ONNX Runtime)        ~30 ms
+           ──► ExternalReferenceBackend (HotSpot)     ~2 s, on OOD or failure
+           ──► FdSolverBackend (2-D SOR)              ~35 ms, last resort
+   │
+   ▼
+Output: field, tmax, tmax_index, error bounds, source, oob_flag, latency, status
+```
 
-| metric | value | file |
+Public headers contain no ONNX Runtime types; the runtime is a private
+implementation detail behind a pimpl. Dependencies (ONNX Runtime, GoogleTest,
+nlohmann/json, pybind11) are fetched by CMake with pinned versions and, for
+the runtime package, pinned SHA-256.
+
+## Repository layout
+
+```
+contract/        contract.md, schema.json, stats.json, conformal.json
+include/, src/   Predictor, Validator, Dispatcher, ConformalTable, FD solver, external backend, C ABI
+apps/ts_demo     --info --parity --fd-calibrate --fd-validate --compare
+bench/           latency, throughput, dynamic grid size
+tests/           GoogleTest suite + fixtures (parity pairs, 50-sample subset, validator expectations)
+tools/           Python: asset fetch, baseline, statistics, analyses, ONNX export, parity, HotSpot wrapper, lifecycle
+python/          pybind11 module + check script
+models/          metadata.json, config_bank.npy, fd_solver_params.json (ONNX files via GitHub release)
+models_*/        candidate versions (fine-tuned, augmented, U-FNO, ensemble) with their own metadata, bank and bounds
+docs/results/    all measured numbers with notes; docs/failure_analysis.md; docs/integration_design.md
+```
+
+## Reproducing the numbers
+
+| step | command | output |
 |---|---|---|
-| baseline reproduction, level4 test (3 000): MAE / RMSE / Tmax err | 1.8293 / 2.5510 / 1.1855 K (authors: 1.8291 / 2.5508 / 1.1851) | [baseline_unet_level4.json](docs/results/baseline_unet_level4.json) |
-| contract gates (baseline × 1.1): MAE / worst-5 % / Tmax median | 2.012 / 3.792 / 0.952 K, enforced by `AccuracyGate.*` | [baseline_unet_level4_per_sample.json](docs/results/baseline_unet_level4_per_sample.json) |
-| PyTorch (batch 1) ↔ ONNX Runtime, 100 samples | max 8.2e-4 K, mean 3.5e-6 K, 88.5 % pixels bit-identical | [parity_python.json](docs/results/parity_python.json) |
-| ONNX Runtime Python ↔ C++, 10 pairs | 0 K (bit-identical) | [parity_cpp.json](docs/results/parity_cpp.json) |
-| hotspot *location*: argmax matches truth | 3.7 % of samples (informative only, no gate) | [baseline_unet_level4_per_sample.json](docs/results/baseline_unet_level4_per_sample.json) |
-
-**Latency and throughput** (Apple M4, 4 P + 6 E cores, 16 GB, ONNX Runtime 1.23.2 CPU)
-
-| measurement | value | file |
-|---|---|---|
-| single prediction, 1 / 4 / 8 threads, p50 | 79.9 / 30.3 / 27.2 ms (p95 80.8 / 33.0 / 34.1) | [latency_single.json](docs/results/latency_single.json) |
-| session load / first call | 8–30 ms / 21–80 ms | same |
-| batch 1 / 8 / 32 / 64, samples per second | 48.8 / 33.8 / 34.3 / 34.6 (no gain from batching on CPU) | [throughput.json](docs/results/throughput.json) |
-| larger grids: 128² / 256² / 512² | 117 ms / 468 ms / 1.87 s, 7.14 ms per 1 k cells, 620 MB at 512² | [dynamic_size.csv](docs/results/dynamic_size.csv) |
-| 8 threads × 100 predictions on one session | bit-identical, ThreadSanitizer clean | [concurrency.json](docs/results/concurrency.json) |
-
-**Reference solvers** (both are reduced models of the generator; the dataset's
-package configuration is not public)
-
-| backend | seen chips MAE | unseen chips MAE | latency | file |
-|---|---|---|---|---|
-| in-process 2-D finite differences, 4 calibrated scalars | 12.8 K | 17.8 K | 34–41 ms | [fd_solver_validation.json](docs/results/fd_solver_validation.json) |
-| HotSpot grid model via subprocess | 13.4 K | 3.4 K | 2–2.7 s | [hotspot_validation.json](docs/results/hotspot_validation.json) |
-
-**Failure analysis**: [docs/failure_analysis.md](docs/failure_analysis.md)
-(one page: trusted region, untrusted region, physical reason), with
-[error_buckets_notes.md](docs/results/error_buckets_notes.md),
-[sensitivity_notes.md](docs/results/sensitivity_notes.md) and
-[backend_comparison_notes.md](docs/results/backend_comparison_notes.md).
-
-## Beyond 64×64
-
-The exported graph is fully convolutional; `model_dynamic.onnx` runs any
-grid whose sides are multiples of 8. Cost is linear at 7.14 ms per thousand
-cells and ~1.6 MB per thousand cells on this CPU, so a million-cell mesh
-would take ~7.5 s and ~2.4 GB in one call. The design for serving such a
-mesh — 256-cell tiles with a 32-cell halo, output streamed into the caller's
-buffer, a GPU execution provider past ~100 k cells, validation and fallback
-per tile — is in [dynamic_size_notes.md](docs/results/dynamic_size_notes.md).
-It is a cost measurement, not a validated prediction.
-
-## Known limitations
-
-- Per-chiplet power changes: the shipped model's gain is 0.1; the augmented
-  candidate reaches 0.85 but is held by the release gate (0.2 K of static
-  accuracy). Whole-chip scaling is exact by physics (§9).
-- Rule I5 is, on this benchmark, a whitelist of the ten chip configurations
-  the model has seen. That is the honest scope of the model, not a general
-  novelty detector; the ensemble spread offers a second, bank-free signal.
-- Neither reference solver reproduces the dataset's generator (HotSpot
-  13 K off on seen chips, 3.4 K on unseen; the FD solver 11–18 K). They are
-  physics-consistent fallbacks, not oracles.
-- Hotspot location is not reproduced (3.7 % exact); `tmax_index` is
-  informative only.
-- CPU execution provider only; macOS arm64 and Linux x64 prebuilt runtimes
-  are wired in `cmake/onnxruntime.cmake`.
-
-## Reproduce every number
-
-| step | command | writes |
-|---|---|---|
-| fetch data + checkpoints (HTTP Range extraction, ~250 MB instead of 46.8 GB) | `python tools/fetch_assets.py [--checkpoint-members level4_UNet/,level4_UFNO/]` | `docs/results/data_manifest.json` |
-| baseline reproduction | `tools/run_baseline.sh --device cpu`; `tools/baseline_per_sample.py` | `baseline_*.json` |
-| training statistics, fixtures | `python tools/export_stats.py --bench ../external/ThermalBench` | `contract/stats.json`, fixtures |
-| sensitivity, error buckets, extrapolation, novelty, fallback curve | `tools/sensitivity.py`, `error_buckets.py`, `extrapolation.py`, `layout_novelty.py`, `fallback_curve.py` | `docs/results/*` |
-| ONNX export + parity | `python tools/export_onnx.py`; `python tools/parity_check.py`; `tools/export_ufno_onnx.py`; `tools/export_ensemble_onnx.py` | `models*/`, `parity_python.json`, `tests/fixtures/parity/` |
-| C++ parity, latency, throughput, sizes | `ts_demo --parity`, `bench_latency`, `bench_throughput`, `bench_dynamic_size` | `parity_cpp.json`, `latency_*.json`, `throughput.json`, `dynamic_size.csv` |
+| data and checkpoints (HTTP Range extraction from the public archives) | `python tools/fetch_assets.py [--checkpoint-members level4_UNet/,level4_UFNO/]` | `docs/results/data_manifest.json` |
+| baseline | `tools/run_baseline.sh --device cpu`; `tools/baseline_per_sample.py` | `baseline_*.json` |
+| statistics, fixtures | `python tools/export_stats.py --bench ../external/ThermalBench` | `contract/stats.json`, `tests/fixtures/` |
+| model characterisation | `tools/sensitivity.py`, `error_buckets.py`, `extrapolation.py`, `layout_novelty.py`, `fallback_curve.py`, `power_gain_verification.py`, `exploration_demo.py` | `docs/results/*` |
+| ONNX export, parity | `tools/export_onnx.py`, `parity_check.py`, `export_ufno_onnx.py`, `export_ensemble_onnx.py` | `models*/`, `parity_python.json`, `tests/fixtures/parity/` |
+| C++ parity and benchmarks | `ts_demo --parity`, `bench_latency`, `bench_throughput`, `bench_dynamic_size` | `parity_cpp.json`, `latency_*.json`, `throughput.json`, `dynamic_size.csv` |
 | reference solvers, backend comparison | `ts_demo --fd-calibrate` / `--fd-validate`; `ts_demo --compare ... python tools/reference_cli.py` | `fd_solver_*.json`, `backend_comparison*.csv` |
-| error bounds, solver-verified gain, exploration | `tools/conformal.py`, `tools/power_gain_verification.py`, `tools/exploration_demo.py` | `contract/conformal.json`, `power_gain_*.json`, `exploration_demo.*` |
-| lifecycle (few-shot, power augmentation) | `tools/finetune_fewshot.py` + `tools/lifecycle_v11.py`; `tools/finetune_power_aug.py` + `tools/lifecycle_poweraug.py` | `lifecycle_*.json`, `power_aug_*.json`, `models_v1.*/` |
+| error bounds | `python tools/conformal.py` | `contract/conformal.json` |
+| model updates | `finetune_fewshot.py` + `lifecycle_v11.py`; `finetune_power_aug.py` + `lifecycle_poweraug.py` | `lifecycle_*.json`, `power_aug_*.json`, `models_v1.*/` |
 | concurrency under TSan | `cmake -B build-tsan -DTS_SANITIZE=thread && ./build-tsan/ts_tests --gtest_filter='Concurrency.*'` | `concurrency.json` |
 
-Python tools need the IC-ThermBench checkout next to this repository
-(`../external/ThermalBench`) and its Python environment (3.10, torch 2.0.1,
-onnxruntime 1.23.2); the C++ side needs only CMake and internet access for
-the pinned ONNX Runtime package.
+The Python tools expect the IC-ThermBench checkout at `../external/ThermalBench`
+with its environment (Python 3.10, torch 2.0.1, onnxruntime 1.23.2). The
+C++ build needs only CMake, a compiler and network access for the pinned
+ONNX Runtime package.
 
 ## Tests
 
-`ctest` runs 38 tests: `Skeleton.*` (runtime and model IO match the
-contract), `Predictor.*` (construction, rejection without exceptions, parity
-with the Python runtime, zero-copy and batch paths), `Validator.*` (each
-status code, both fixtures, feature extraction equals Python),
-`Fixture.*` (dispatcher rules F1–F4 with scripted backends),
-`FdSolver.*` (convergence, exact ambient shift, power gain 1, fallback),
-`ExternalBackend.*` (protocol, exit codes, timeout kill),
-`Concurrency.*`, `AccuracyGate.*` (contract gates on the committed
-50-sample subset; status spellings equal the schema enum), `Conformal.*`
-(bounds load, widen with the rise, cover the held-out subset),
-`PowerWhatIf.*` (physics-scaled what-ifs have gain exactly 1).
+`ctest` runs 38 tests: `Skeleton.*` (runtime version, model IO),
+`Predictor.*` (construction, rejection paths, parity, zero-copy, batch),
+`Validator.*` (each status code, both fixtures, feature extraction),
+`Fixture.*` (dispatcher rules F1–F4), `FdSolver.*`, `ExternalBackend.*`
+(protocol, exit codes, timeout), `Concurrency.*`, `AccuracyGate.*`
+(contract gates, schema spellings), `Conformal.*`, `PowerWhatIf.*`.
 
-## Layout
+## Known limitations
 
-```
-contract/        contract.md, schema.json, stats.json, conformal.json   the interface and its measured constants
-include/, src/   Predictor, Validator, Dispatcher (+ ConformalTable, power what-if), FD solver, external backend, C ABI
-apps/ts_demo     --info --parity --fd-calibrate --fd-validate --compare
-bench/           latency, throughput, dynamic size
-tests/           GoogleTest suite + fixtures (parity pairs, eval50 subset, validator expectations)
-tools/           Python: asset fetch, baseline, statistics, analyses, exports, parity, HotSpot wrapper, lifecycle
-python/          pybind11 module + check script
-models/          metadata.json, config_bank.npy, fd_solver_params.json (ONNX files via release)
-models_v1.1_*/, models_v1.2_*/, models_ufno/, models_ensemble/   candidates with their own metadata, bank and conformal table
-docs/results/    every measured number, with notes; docs/failure_analysis.md; docs/integration_design.md
-```
+- Per-chiplet power changes: the shipped model's sensitivity is 0.1 of the
+  physical response; the augmented candidate reaches 0.85 but is held by
+  the release gate. Whole-chip scaling is exact (§9).
+- Rule I5 is, on this benchmark, a whitelist of the ten trained chip
+  configurations; the ensemble disagreement is an independent signal.
+- Neither reference solver reproduces the dataset's generator (HotSpot
+  13 K off on seen chips, 3.4 K on unseen; FD 11–18 K).
+- Hotspot location is not reproduced (3.7 % exact); `tmax_index` is
+  informative only.
+- CPU execution provider only (macOS arm64, Linux x64).
 
 ## License and attribution
 
 Code: MIT ([LICENSE](LICENSE)). Model weights and data: IC-ThermBench
-(CC BY 4.0), used unmodified; the exported ONNX files are derivatives of the
+(CC BY 4.0), used unmodified; the exported ONNX files derive from the
 released level4 U-Net and U-FNO checkpoints. HotSpot is used as an external
-tool under its own license. ONNX Runtime is fetched as Microsoft's prebuilt
-package.
+tool under its own license. ONNX Runtime is Microsoft's prebuilt package.
