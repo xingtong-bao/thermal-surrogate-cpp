@@ -19,7 +19,7 @@
 - **模型生命周期** — 用求解器答案或增强数据微调、导出 ONNX、对拍、重标定误差界、在全量测试集上跑发布门槛的脚本。
 - **与模型无关** — U-Net、U-FNO（谱层改写为矩阵乘后导出）和集成模型通过同一 API 加载。
 - **绑定** — 不透明句柄的 C 接口（`ts_c_api.h`）、pybind11 模块。
-- **工程** — 零拷贝输入、调用方拥有输出、线程安全预测（ThreadSanitizer 验证）、哈希钉死的依赖、38 个测试、Linux CI。
+- **工程** — 零拷贝输入、调用方拥有输出、线程安全预测（ThreadSanitizer 验证）、参考求解器的 OpenMP 红黑 SOR（线程数不改变结果的任何一位）、哈希钉死的依赖、41 个测试、Linux CI。
 
 ## 结果
 
@@ -48,6 +48,7 @@
 | 50/50 已知/未见混合流的混合 MAE | 2.2 K（仅代理 7.9 K） | [fallback_curve.json](docs/results/fallback_curve.json) |
 | 参考求解器：差分（进程内）/ HotSpot（子进程），已知芯片 MAE，延迟 | 12.8 K，34 ms / 13.4 K，2.7 s | [fd_solver_validation.json](docs/results/fd_solver_validation.json)，[hotspot_validation.json](docs/results/hotspot_validation.json) |
 | 单会话 8 线程 × 100 次预测 | 逐位相同，TSan 无告警 | [concurrency.json](docs/results/concurrency.json) |
+| FD 求解器 OpenMP 红黑 SOR，512² 网格：4 / 8 线程 | 2.7× / 2.4×（结果逐位相同；64² 上串行更快） | [sor_scaling_notes.md](docs/results/sor_scaling_notes.md) |
 
 **同一库下的不同模型**
 
@@ -78,7 +79,7 @@ git clone https://github.com/xingtong-bao/thermal-surrogate-cpp && cd thermal-su
 gh release download models-v1 --dir models          # model.onnx + model_dynamic.onnx（各 20 MB）
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
-ctest --test-dir build --output-on-failure        # 38 个测试，约 20 秒
+ctest --test-dir build --output-on-failure        # 41 个测试，约 20 秒
 ./build/ts_demo --info                            # 运行时版本 + 模型 IO
 ./build/c_caller models contract tests/fixtures/sample_input.npy   # C 接口示例
 ```
@@ -168,13 +169,14 @@ docs/results/    全部实测数字及笔记；docs/failure_analysis.md；docs/i
 | 参考求解器、后端对比 | `ts_demo --fd-calibrate` / `--fd-validate`；`ts_demo --compare ... python tools/reference_cli.py` | `fd_solver_*.json`、`backend_comparison*.csv` |
 | 误差界 | `python tools/conformal.py` | `contract/conformal.json` |
 | 模型更新 | `finetune_fewshot.py` + `lifecycle_v11.py`；`finetune_power_aug.py` + `lifecycle_poweraug.py` | `lifecycle_*.json`、`power_aug_*.json`、`models_v1.*/` |
-| TSan 并发 | `cmake -B build-tsan -DTS_SANITIZE=thread && ./build-tsan/ts_tests --gtest_filter='Concurrency.*'` | `concurrency.json` |
+| TSan 并发 | `cmake -B build-tsan -DTS_SANITIZE=thread && ./build-tsan/ts_tests --gtest_filter='Concurrency.*:FdSolver.*'` | `concurrency.json` |
+| SOR 线程扩展 | `bench_sor_scaling --sizes 64,128,256,512 --threads 1,2,4,8` | `sor_scaling.csv`、`sor_scaling_notes.md` |
 
 Python 工具需要 IC-ThermBench 检出在 `../external/ThermalBench` 及其环境（Python 3.10、torch 2.0.1、onnxruntime 1.23.2）。C++ 构建只需要 CMake、编译器和下载钉死版本 ONNX Runtime 包的网络。
 
 ## 测试
 
-`ctest` 运行 38 个测试：`Skeleton.*`（运行时版本、模型 IO）、`Predictor.*`（构造、拒绝路径、对拍、零拷贝、批量）、`Validator.*`（每个状态码、两个 fixture、特征提取）、`Fixture.*`（调度器规则 F1–F4）、`FdSolver.*`、`ExternalBackend.*`（协议、退出码、超时）、`Concurrency.*`、`AccuracyGate.*`（合同门槛、schema 拼写）、`Conformal.*`、`PowerWhatIf.*`。
+`ctest` 运行 41 个测试：`Skeleton.*`（运行时版本、模型 IO）、`Predictor.*`（构造、拒绝路径、对拍、零拷贝、批量）、`Validator.*`（每个状态码、两个 fixture、特征提取）、`Fixture.*`（调度器规则 F1–F4）、`FdSolver.*`、`ExternalBackend.*`（协议、退出码、超时）、`Concurrency.*`、`AccuracyGate.*`（合同门槛、schema 拼写）、`Conformal.*`、`PowerWhatIf.*`。
 
 ## 已知局限
 

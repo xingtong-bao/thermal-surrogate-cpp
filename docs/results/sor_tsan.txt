@@ -1,0 +1,23 @@
+# ThreadSanitizer + Archer run, 2026-10-26 (S9.1)
+# build: cmake -B build-tsan -DTS_SANITIZE=thread; tools/build_archer.sh
+# cmd: OMP_TOOL_LIBRARIES=build-tsan/archer/libarcher.dylib ARCHER_OPTIONS=verbose=1 TSAN_OPTIONS=ignore_noninstrumented_modules=1 ./build-tsan/ts_tests --gtest_filter='FdSolver.*:Concurrency.*'
+[ RUN      ] FdSolver.ConvergesOnTheFixtureAndRespectsPhysics
+Archer detected OpenMP application with TSan, supplying OpenMP synchronization semantics
+[       OK ] FdSolver.ConvergesOnTheFixtureAndRespectsPhysics (1276 ms)
+[ RUN      ] FdSolver.AmbientShiftIsExact
+[       OK ] FdSolver.AmbientShiftIsExact (2226 ms)
+[ RUN      ] FdSolver.PowerScalesTheRise
+[       OK ] FdSolver.PowerScalesTheRise (2347 ms)
+[ RUN      ] FdSolver.ServesAsFallbackForTheUnseenLayout
+[       OK ] FdSolver.ServesAsFallbackForTheUnseenLayout (312 ms)
+[ RUN      ] FdSolver.RowSweepMatchesTheOriginalCellOrderSweepBitForBit
+[       OK ] FdSolver.RowSweepMatchesTheOriginalCellOrderSweepBitForBit (13 ms)
+[ RUN      ] FdSolver.ParallelSweepsAreBitIdenticalToSerial
+[       OK ] FdSolver.ParallelSweepsAreBitIdenticalToSerial (869979 ms)
+[ RUN      ] FdSolver.ThreadsParameterDoesNotChangeTheContractAnswer
+[       OK ] FdSolver.ThreadsParameterDoesNotChangeTheContractAnswer (2067 ms)
+[ RUN      ] Concurrency.EightThreadsBitIdentical
+[       OK ] Concurrency.EightThreadsBitIdentical (9251 ms)
+[  PASSED  ] 8 tests.
+
+# ThreadSanitizer warnings: 0

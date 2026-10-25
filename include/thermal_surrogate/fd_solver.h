@@ -21,10 +21,25 @@
 //
 // Numerics: successive over-relaxation (SOR), red-black ordering, stops when
 // the max update falls below `tol` K or after `max_iter` sweeps.
+//
+// Parallelism (S9.1): a plain Gauss-Seidel/SOR sweep is sequential, because
+// cell i reads the value cell i-1 produced a moment ago. Red-black ordering
+// colours the grid like a chessboard: every neighbour of a red cell is black,
+// so all red cells can be updated at once from black values, then all black
+// cells from red values. Each half-sweep is a parallel loop over rows (OpenMP
+// when the build has it, serial otherwise). Because a cell only ever reads
+// cells of the other colour, the result does not depend on how rows are
+// distributed over threads: 1 thread and N threads give bit-identical fields
+// and the same iteration count (tests/test_fd_solver.cpp checks this). The
+// only cross-thread value is the max |update|, and max is order-independent.
+// Measured on an M4 (docs/results/sor_scaling_notes.md): 2.7x at 512^2 with 4
+// threads, but slower than serial at the 64^2 contract grid, where a half-sweep
+// is ~2.5 us of work; hence `threads` defaults to 1.
 #pragma once
 
 #include <cstddef>
 #include <string>
+#include <vector>
 
 #include "thermal_surrogate/backend.h"
 #include "thermal_surrogate/types.h"
@@ -39,6 +54,8 @@ struct FdSolverParams {
   double omega = 1.8;            // SOR relaxation factor
   double tol = 1e-4;             // stop when max |dT| per sweep < tol (K)
   int max_iter = 20000;
+  int threads = 1;               // 1 = serial; N = OpenMP threads (one team for the whole solve); 0 = all hardware threads
+  bool dynamic_schedule = false; // row scheduling, see SorSchedule
 };
 
 struct FdSolveStats {
@@ -49,6 +66,39 @@ struct FdSolveStats {
 
 // Solve one contract tensor into `field` (kCells floats). Returns Ok or ReferenceFailed.
 Status fd_solve(const float* input, const FdSolverParams& p, float* field, FdSolveStats* stats = nullptr) noexcept;
+
+// ---- grid-generic SOR core ------------------------------------------------------
+// fd_solve() builds one of these from the 64x64 contract tensor; bench_sor_scaling
+// builds them at 64^2 .. 512^2 to measure thread scaling. Same code path either way.
+struct SorGrid {
+  std::size_t nx = 0, ny = 0;    // cells; cell (x, y) is index x * ny + y
+  std::vector<double> q;         // heat source per cell, W/m^2
+  std::vector<double> kx;        // conductance to the +x neighbour, W/K (0 on the last column)
+  std::vector<double> ky;        // conductance to the +y neighbour, W/K (0 on the last row)
+  double area = 0.0;             // cell area, m^2
+  double g_sink = 0.0;           // conductance per cell into the sink, W/K
+  double t_sink = 0.0;           // sink temperature, K
+  std::size_t cells() const { return nx * ny; }
+};
+
+// One red-black sweep (red half-sweep, then black) in place; returns max |update| in K.
+// `threads` as in FdSolverParams::threads.
+double sor_sweep(const SorGrid& g, double omega, int threads, std::vector<double>& T) noexcept;
+
+// How rows are handed to threads. Static: equal contiguous blocks (best when all
+// cores are alike). Dynamic: chunks of 4 rows on demand (better on
+// performance + efficiency core mixes, where a static split waits for the
+// slowest core). Either way the result is bit-identical.
+enum class SorSchedule { Static, Dynamic };
+
+// Sweep until max |update| < tol or max_iter sweeps. T holds the initial guess on
+// entry (sized g.cells()) and the solution on return. With threads > 1 and OpenMP,
+// one parallel region spans the whole iteration (two barriers per sweep).
+FdSolveStats sor_solve(const SorGrid& g, double omega, double tol, int max_iter, int threads, std::vector<double>& T,
+                       SorSchedule sched = SorSchedule::Static) noexcept;
+
+// True when the library was built with OpenMP (threads > 1 has an effect).
+bool fd_solver_has_openmp() noexcept;
 
 FdSolverParams load_fd_params(const std::string& json_path);   // throws on missing file
 

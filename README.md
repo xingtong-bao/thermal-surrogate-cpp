@@ -36,7 +36,9 @@ repository and links to the file that holds it.
   products) and an ensemble load through the same API.
 - **Bindings** — C ABI with an opaque handle (`ts_c_api.h`), pybind11 module.
 - **Engineering** — zero-copy input, caller-owned output, thread-safe
-  prediction (ThreadSanitizer-checked), hash-pinned dependencies, 38 tests,
+  prediction (ThreadSanitizer-checked), OpenMP red-black SOR in the
+  reference solver (thread count does not change a single bit of the
+  answer), hash-pinned dependencies, 41 tests,
   CI on Linux.
 
 ## Results
@@ -68,6 +70,7 @@ Measured on Apple M4 (4 P + 6 E cores, 16 GB), ONNX Runtime 1.23.2 CPU.
 | blended MAE on a 50/50 seen/unseen stream | 2.2 K (surrogate alone 7.9 K) | [fallback_curve.json](docs/results/fallback_curve.json) |
 | reference solvers: FD (in-process) / HotSpot (subprocess), seen chips MAE, latency | 12.8 K, 34 ms / 13.4 K, 2.7 s | [fd_solver_validation.json](docs/results/fd_solver_validation.json), [hotspot_validation.json](docs/results/hotspot_validation.json) |
 | 8 threads × 100 predictions on one session | bit-identical, TSan clean | [concurrency.json](docs/results/concurrency.json) |
+| FD solver, OpenMP red-black SOR, 512² grid: 4 / 8 threads | 2.7× / 2.4× (bit-identical fields; serial wins at 64²) | [sor_scaling_notes.md](docs/results/sor_scaling_notes.md) |
 
 **Model variants through the same library**
 
@@ -104,7 +107,7 @@ git clone https://github.com/xingtong-bao/thermal-surrogate-cpp && cd thermal-su
 gh release download models-v1 --dir models          # model.onnx + model_dynamic.onnx (20 MB each)
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
-ctest --test-dir build --output-on-failure        # 38 tests, ~20 s
+ctest --test-dir build --output-on-failure        # 41 tests, ~25 s
 ./build/ts_demo --info                            # runtime version + model IO
 ./build/c_caller models contract tests/fixtures/sample_input.npy   # C ABI example
 ```
@@ -170,7 +173,8 @@ Validator ── I1–I3 reject ──► Status
    ▼
 Dispatcher ──► SurrogateBackend (ONNX Runtime)        ~30 ms
            ──► ExternalReferenceBackend (HotSpot)     ~2 s, on OOD or failure
-           ──► FdSolverBackend (2-D SOR)              ~35 ms, last resort
+           ──► FdSolverBackend (2-D red-black SOR,     ~35 ms, last resort
+               OpenMP sweeps, serial at 64²)
    │
    ▼
 Output: field, tmax, tmax_index, error bounds, source, oob_flag, latency, status
@@ -209,7 +213,8 @@ docs/results/    all measured numbers with notes; docs/failure_analysis.md; docs
 | reference solvers, backend comparison | `ts_demo --fd-calibrate` / `--fd-validate`; `ts_demo --compare ... python tools/reference_cli.py` | `fd_solver_*.json`, `backend_comparison*.csv` |
 | error bounds | `python tools/conformal.py` | `contract/conformal.json` |
 | model updates | `finetune_fewshot.py` + `lifecycle_v11.py`; `finetune_power_aug.py` + `lifecycle_poweraug.py` | `lifecycle_*.json`, `power_aug_*.json`, `models_v1.*/` |
-| concurrency under TSan | `cmake -B build-tsan -DTS_SANITIZE=thread && ./build-tsan/ts_tests --gtest_filter='Concurrency.*'` | `concurrency.json` |
+| concurrency under TSan | `cmake -B build-tsan -DTS_SANITIZE=thread && ./build-tsan/ts_tests --gtest_filter='Concurrency.*:FdSolver.*'` | `concurrency.json` |
+| SOR thread scaling | `bench_sor_scaling --sizes 64,128,256,512 --threads 1,2,4,8` | `sor_scaling.csv`, `sor_scaling_notes.md` |
 
 The Python tools expect the IC-ThermBench checkout at `../external/ThermalBench`
 with its environment (Python 3.10, torch 2.0.1, onnxruntime 1.23.2). The
@@ -218,10 +223,11 @@ ONNX Runtime package.
 
 ## Tests
 
-`ctest` runs 38 tests: `Skeleton.*` (runtime version, model IO),
+`ctest` runs 41 tests: `Skeleton.*` (runtime version, model IO),
 `Predictor.*` (construction, rejection paths, parity, zero-copy, batch),
 `Validator.*` (each status code, both fixtures, feature extraction),
-`Fixture.*` (dispatcher rules F1–F4), `FdSolver.*`, `ExternalBackend.*`
+`Fixture.*` (dispatcher rules F1–F4), `FdSolver.*` (physics, and parallel
+sweeps bit-identical to serial), `ExternalBackend.*`
 (protocol, exit codes, timeout), `Concurrency.*`, `AccuracyGate.*`
 (contract gates, schema spellings), `Conformal.*`, `PowerWhatIf.*`.
 

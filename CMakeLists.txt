@@ -31,6 +31,26 @@ endif()
 include(cmake/onnxruntime.cmake)
 include(cmake/json.cmake)
 
+# ---- OpenMP (optional) ----------------------------------------------------------
+# Used only by the red-black SOR half-sweeps in src/fd_solver.cpp (S9.1). Without
+# it the library builds and runs serially; FdSolverParams::threads then has no
+# effect and fd_solver_has_openmp() returns false. Apple clang ships no OpenMP
+# runtime: `brew install libomp` and the hint below make FindOpenMP see it.
+option(TS_OPENMP "Parallel red-black SOR sweeps via OpenMP when available" ON)
+set(TS_HAVE_OPENMP OFF)
+if(TS_OPENMP)
+  if(APPLE AND EXISTS /opt/homebrew/opt/libomp)
+    list(APPEND CMAKE_PREFIX_PATH /opt/homebrew/opt/libomp)
+  endif()
+  find_package(OpenMP COMPONENTS CXX)
+  if(OpenMP_CXX_FOUND)
+    set(TS_HAVE_OPENMP ON)
+    message(STATUS "OpenMP ${OpenMP_CXX_VERSION}: parallel SOR sweeps enabled")
+  else()
+    message(STATUS "OpenMP not found: SOR sweeps are serial")
+  endif()
+endif()
+
 # ---- library ------------------------------------------------------------------
 add_library(thermal_surrogate STATIC
   src/status.cpp
@@ -49,6 +69,10 @@ target_include_directories(thermal_surrogate PUBLIC
 # our headers, which mention no ORT type. It is still exported transitively
 # for linking because the static library needs the shared runtime at link time.
 target_link_libraries(thermal_surrogate PRIVATE onnxruntime::onnxruntime nlohmann_json::nlohmann_json)
+if(TS_HAVE_OPENMP)
+  # PUBLIC: the static library's consumers must link the OpenMP runtime too.
+  target_link_libraries(thermal_surrogate PUBLIC OpenMP::OpenMP_CXX)
+endif()
 target_compile_definitions(thermal_surrogate PRIVATE
   TS_VERSION_STRING="${PROJECT_VERSION}"
   TS_ORT_VERSION_STRING="${TS_ORT_VERSION}")
@@ -118,6 +142,12 @@ if(TS_BUILD_BENCH)
   target_include_directories(bench_throughput PRIVATE bench)
   target_compile_definitions(bench_throughput PRIVATE TS_MODELS_DIR="${TS_MODELS_DIR}" TS_FIXTURE_DIR="${TS_FIXTURE_DIR}")
   set_target_properties(bench_throughput PROPERTIES BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}")
+
+  # S9.1: thread scaling of the red-black SOR solver at 64^2 .. 512^2; no ONNX needed.
+  add_executable(bench_sor_scaling bench/sor_scaling.cpp)
+  target_link_libraries(bench_sor_scaling PRIVATE thermal_surrogate onnxruntime::onnxruntime nlohmann_json::nlohmann_json)
+  target_include_directories(bench_sor_scaling PRIVATE bench)
+  set_target_properties(bench_sor_scaling PROPERTIES BUILD_RPATH "${ONNXRUNTIME_LIB_DIR}")
 
   add_executable(bench_dynamic_size bench/dynamic_size.cpp)
   target_link_libraries(bench_dynamic_size PRIVATE thermal_surrogate onnxruntime::onnxruntime)
