@@ -58,14 +58,18 @@
 | U-FNO | 0.60 / 0.27 K | 24.6 K | 760 ms | [model_swap_notes.md](docs/results/model_swap_notes.md) |
 | U-Net + U-FNO 集成 | 0.69 / 0.27 K | 18.4 K | 745 ms | [ensemble_spread.json](docs/results/ensemble_spread.json) |
 
-**模型更新与发布门槛**（全部 3000 条测试集；"通过" = 三条合同门槛全过）
+**模型更新与发布门槛**
 
-| 候选 | 目的 | 未见芯片 MAE | 已知芯片 MAE | 热点中位 | 门槛 | 文件 |
+已知芯片的数字写成"50 样本冒烟子集 / 全部 3000 条"。未见芯片的数字来自两个不同的 50 样本集合，候选模型只能和同一集合上的 v1.0 比较：(A) 微调时留出的样本，(B) 后端对比用的样本。
+
+| 候选 | 目的 | 未见芯片 MAE | 已知芯片 MAE（50 / 3000） | 热点中位（50 / 3000） | 门槛 | 文件 |
 |---|---|---|---|---|---|---|
-| v1.0（发布版） | — | 15.8 K | 1.83 K | 0.87 K | 通过 | [baseline_unet_level4.json](docs/results/baseline_unet_level4.json) |
-| v1.1，每块未见芯片 50 个求解器答案 | 适应新芯片 | 2.6 K | 5.8 K | — | 不过（遗忘） | [lifecycle_notes.md](docs/results/lifecycle_notes.md) |
-| v1.1 + 回放 250 个训练样本 | 同上，不遗忘 | 2.8 K | 1.45 K | 1.19 K | 不过（热点） | 同上 |
-| v1.4，功率增强 ±15% | 功率灵敏度 0.1 → 0.85 | 13.4 K | 2.07 K | 1.09 K | 不过（MAE、热点） | [power_aug_notes.md](docs/results/power_aug_notes.md) |
+| v1.0（发布版） | — | 15.8 K (A)，14.8 K (B) | 1.05 / 1.83 K | 0.61 / 0.87 K | 两者都通过 | [power_aug_narrow_fulltest.json](docs/results/power_aug_narrow_fulltest.json) |
+| v1.1，每块未见芯片 50 个求解器答案 | 适应新芯片 | 2.6 K (A) | 5.8 K / 未跑 | 5.8 K / 未跑 | 冒烟子集不过（遗忘） | [lifecycle_notes.md](docs/results/lifecycle_notes.md) |
+| v1.1 + 回放 250 个训练样本 | 同上，不遗忘 | 2.8 K (A) | 1.45 K / 未跑 | 1.19 K / 未跑 | 冒烟子集不过（热点） | 同上 |
+| v1.4，功率增强 ±15% | 功率灵敏度 0.1 → 0.85 | 13.4 K (B) | 1.42 / 2.07 K | 0.73 / 1.09 K | 冒烟子集通过，全量不过（MAE、热点） | [power_aug_notes.md](docs/results/power_aug_notes.md) |
+
+"通过"指三条合同门槛全过：MAE 2.012 K、最差 5% 样本 MAE 3.792 K、热点中位 0.952 K。每条门槛都是 v1.0 全量基线 × 1.1，所以它们只能发现相对 v1.0 的退步，不能说明 v1.0 的精度对某个产品已经够用。两个 v1.1 候选在冒烟子集上就没过，因此没有跑全量。
 
 **发布版模型的特性刻画** — 功率灵敏度为求解器响应的 0.1–0.3（HotSpot 验证），散热灵敏度斜率为求解器的 2 倍，热点位置精确命中 3.7%，误差随功率密度和温升增长：[docs/failure_analysis.md](docs/failure_analysis.md)、[sensitivity_notes.md](docs/results/sensitivity_notes.md)、[error_buckets_notes.md](docs/results/error_buckets_notes.md)、[exploration_notes.md](docs/results/exploration_notes.md)。
 

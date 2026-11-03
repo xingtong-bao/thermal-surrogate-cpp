@@ -80,14 +80,18 @@ Measured on Apple M4 (4 P + 6 E cores, 16 GB), ONNX Runtime 1.23.2 CPU.
 | U-FNO | 0.60 / 0.27 K | 24.6 K | 760 ms | [model_swap_notes.md](docs/results/model_swap_notes.md) |
 | U-Net + U-FNO ensemble | 0.69 / 0.27 K | 18.4 K | 745 ms | [ensemble_spread.json](docs/results/ensemble_spread.json) |
 
-**Model updates and release gates** (full 3 000-sample split; "pass" = all three contract gates)
+**Model updates and release gates**
 
-| candidate | purpose | unseen chips MAE | seen chips MAE | hotspot median | gates | file |
+Seen-chip numbers are given as 50-sample smoke subset / full 3 000-sample split. Unseen-chip numbers use one of two 50-sample sets, so compare a candidate only with the v1.0 number from the same set: (A) held out from fine-tuning, (B) the backend-comparison set.
+
+| candidate | purpose | unseen chips MAE | seen chips MAE (50 / 3 000) | hotspot median (50 / 3 000) | gates | file |
 |---|---|---|---|---|---|---|
-| v1.0 (shipped) | — | 15.8 K | 1.83 K | 0.87 K | pass | [baseline_unet_level4.json](docs/results/baseline_unet_level4.json) |
-| v1.1, 50 solver answers per unseen chip | adapt to new chips | 2.6 K | 5.8 K | — | fail (forgetting) | [lifecycle_notes.md](docs/results/lifecycle_notes.md) |
-| v1.1 + replay of 250 training samples | same, without forgetting | 2.8 K | 1.45 K | 1.19 K | fail (hotspot) | same |
-| v1.4, power augmentation ±15 % | power sensitivity 0.1 → 0.85 | 13.4 K | 2.07 K | 1.09 K | fail (MAE, hotspot) | [power_aug_notes.md](docs/results/power_aug_notes.md) |
+| v1.0 (shipped) | — | 15.8 K (A), 14.8 K (B) | 1.05 / 1.83 K | 0.61 / 0.87 K | pass on both | [power_aug_narrow_fulltest.json](docs/results/power_aug_narrow_fulltest.json) |
+| v1.1, 50 solver answers per unseen chip | adapt to new chips | 2.6 K (A) | 5.8 K / not run | 5.8 K / not run | fail on the smoke subset (forgetting) | [lifecycle_notes.md](docs/results/lifecycle_notes.md) |
+| v1.1 + replay of 250 training samples | same, without forgetting | 2.8 K (A) | 1.45 K / not run | 1.19 K / not run | fail on the smoke subset (hotspot) | same |
+| v1.4, power augmentation ±15 % | power sensitivity 0.1 → 0.85 | 13.4 K (B) | 1.42 / 2.07 K | 0.73 / 1.09 K | pass on the smoke subset, fail on the full split (MAE, hotspot) | [power_aug_notes.md](docs/results/power_aug_notes.md) |
+
+"Pass" means all three contract gates: MAE 2.012 K, worst-5 % per-sample MAE 3.792 K, hotspot median 0.952 K. Each gate is the v1.0 full-split baseline × 1.1, so the gates catch regressions against v1.0; they do not establish that v1.0 is accurate enough for a given product. Both v1.1 candidates failed the smoke subset and were never run on the full split.
 
 **Characterisation of the shipped model** — power-sensitivity gain 0.1–0.3
 of the solver's response (HotSpot-verified), cooling-sensitivity slope 2×
