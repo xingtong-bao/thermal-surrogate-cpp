@@ -1,8 +1,9 @@
-// tests/test_predictor.cpp -- S4.2: the C++ predictor reproduces the Python ONNX Runtime output
+// tests/test_predictor.cpp -- S4.2: the C++ predictor reproduces the Python ONNX Runtime output (S10.1: span batch API)
 #include <gtest/gtest.h>
 
 #include <cmath>
 #include <fstream>
+#include <span>
 #include <string>
 
 #include "thermal_surrogate/npy.h"
@@ -101,13 +102,40 @@ TEST(Predictor, ZeroCopyAndBatchAgreeWithPredict) {
   std::vector<float> in2(2 * kInputSize), out2(2 * kCells);
   std::copy(x.data.begin(), x.data.end(), in2.begin());
   std::copy(x.data.begin(), x.data.end(), in2.begin() + static_cast<long>(kInputSize));
-  EXPECT_EQ(fixed.predict_batch(in2.data(), 2, out2.data()).code, StatusCode::ShapeMismatch);
-  ASSERT_TRUE(dyn.predict_batch(in2.data(), 2, out2.data()).ok());
+  EXPECT_EQ(fixed.predict_batch(in2, out2).code, StatusCode::ShapeMismatch);
+  ASSERT_TRUE(dyn.predict_batch(in2, out2).ok());
   double worst = 0;
   for (std::size_t i = 0; i < kCells; ++i) {
     worst = std::max(worst, static_cast<double>(std::fabs(out2[i] - a.field[i])));
     worst = std::max(worst, static_cast<double>(std::fabs(out2[kCells + i] - a.field[i])));
   }
   EXPECT_LT(worst, 5e-3);
-  EXPECT_EQ(dyn.predict_batch(nullptr, 2, out2.data()).code, StatusCode::InvalidInput);
+  EXPECT_EQ(dyn.predict_batch({}, out2).code, StatusCode::InvalidInput);
+}
+
+TEST(Predictor, BatchSpansCarryTheirLength) {
+  // S10.1: predict_batch(span inputs, span fields) derives n from the input
+  // length and checks the output length against it. The old signature
+  // (pointer, n, pointer) had to trust that n matched both buffers.
+  const std::string models = std::string(TS_MODEL_PATH).substr(0, std::string(TS_MODEL_PATH).rfind('/'));
+  Predictor fixed(TS_MODEL_PATH, kMetadata);
+  Predictor dyn(models + "/model_dynamic.onnx", kMetadata);
+  const auto x = npy::load_f32(pair_file("input", 0));
+  std::vector<float> in2(2 * kInputSize), out2(2 * kCells, -1.0f);
+  std::copy(x.data.begin(), x.data.end(), in2.begin());
+  std::copy(x.data.begin(), x.data.end(), in2.begin() + static_cast<long>(kInputSize));
+
+  // Input that is not a whole number of tensors, or an output of the wrong size.
+  EXPECT_EQ(dyn.predict_batch(std::span(in2).first(kInputSize + 7), out2).code, StatusCode::ShapeMismatch);
+  EXPECT_EQ(dyn.predict_batch(in2, std::span(out2).first(kCells)).code, StatusCode::ShapeMismatch);
+  EXPECT_EQ(out2, std::vector<float>(2 * kCells, -1.0f));   // nothing was written
+
+  // One tensor cut out of the batch buffer runs on the fixed-shape model (n = 1)
+  // and matches predict() bit for bit: same graph, same single-sample call.
+  Output a;
+  fixed.predict(Input{x.data.data(), kInputShape}, a);
+  ASSERT_TRUE(a.status.ok());
+  std::vector<float> one(kCells);
+  ASSERT_TRUE(fixed.predict_batch(std::span(in2).subspan(kInputSize), one).ok());
+  EXPECT_EQ(one, a.field);
 }

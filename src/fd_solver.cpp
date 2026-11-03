@@ -6,6 +6,7 @@
 #include <cmath>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <span>
 #include <stdexcept>
 #include <vector>
 
@@ -16,10 +17,13 @@
 namespace thermal_surrogate {
 namespace {
 
-inline double ch(const float* d, std::size_t i, Channel c) { return d[i * kP + static_cast<std::size_t>(c)]; }
+// TensorView (types.h): one contract tensor, length fixed in the type (S10.1).
+// fd_solve() checks the caller's dynamic span once and converts with
+// first<kInputSize>(); these helpers then cannot get a buffer of the wrong length.
+inline double ch(TensorView d, std::size_t i, Channel c) { return d[i * kP + static_cast<std::size_t>(c)]; }
 
 // Cell spacing in metres from the coordinate channels (max positive step).
-double cell_size_m(const float* d, Channel c) {
+double cell_size_m(TensorView d, Channel c) {
   double best = 0.0;
   for (std::size_t x = 0; x < kX; ++x)
     for (std::size_t y = 0; y < kY; ++y) {
@@ -98,16 +102,21 @@ bool fd_solver_has_openmp() noexcept {
 #endif
 }
 
-double sor_sweep(const SorGrid& g, double omega, int threads, std::vector<double>& T) noexcept {
+// The public entry points take std::span and check the length once; the hot
+// per-cell loops above keep a plain double* (span's operator[] would compile to
+// the same load, but the pointer makes it obvious that no check runs per cell).
+double sor_sweep(const SorGrid& g, double omega, int threads, std::span<double> T) noexcept {
+  if (T.size() != g.cells()) return std::nan("");
   const int nt = resolve_threads(threads);
   const double red = half_sweep(g, omega, 0, nt, T.data());
   const double black = half_sweep(g, omega, 1, nt, T.data());
   return std::max(red, black);
 }
 
-FdSolveStats sor_solve(const SorGrid& g, double omega, double tol, int max_iter, int threads, std::vector<double>& T,
+FdSolveStats sor_solve(const SorGrid& g, double omega, double tol, int max_iter, int threads, std::span<double> T,
                        SorSchedule sched) noexcept {
   FdSolveStats st;
+  if (T.size() != g.cells()) return st;   // 0 iterations, not converged; T untouched
   const int nt = resolve_threads(threads);
   double max_upd = 0.0;
   int it = 0;
@@ -183,7 +192,14 @@ FdSolveStats sor_solve(const SorGrid& g, double omega, double tol, int max_iter,
   return st;
 }
 
-Status fd_solve(const float* d, const FdSolverParams& p, float* T, FdSolveStats* st) noexcept {
+Status fd_solve(std::span<const float> input, const FdSolverParams& p, std::span<float> T, FdSolveStats* st) noexcept {
+  // Length check at the boundary (S10.1). A null pointer arrives as an empty
+  // span, so it fails here too instead of being dereferenced.
+  if (input.size() != kInputSize)
+    return {StatusCode::ShapeMismatch, "input holds " + std::to_string(input.size()) + " floats, expected " + std::to_string(kInputSize)};
+  if (T.size() != kCells)
+    return {StatusCode::ShapeMismatch, "field holds " + std::to_string(T.size()) + " floats, expected " + std::to_string(kCells)};
+  const TensorView d = input.first<kInputSize>();   // checked above, so the fixed-length view is safe
   try {
     const double dx = cell_size_m(d, Channel::GridX), dy = cell_size_m(d, Channel::GridY);
     if (!(dx > 0) || !(dy > 0)) return {StatusCode::ReferenceFailed, "cannot infer cell size from grid_x/grid_y"};
@@ -270,7 +286,9 @@ void FdSolverBackend::solve(const Input& in, Output& out) noexcept {
   } catch (...) { out.status = {StatusCode::ReferenceFailed, "out of memory"}; return; }
   const auto t0 = std::chrono::steady_clock::now();
   FdSolveStats st;
-  out.status = fd_solve(in.data, params_, out.field.data(), &st);
+  // Input is the contract's raw-pointer view (shared with the C API); its shape
+  // was checked just above, so it is safe to give it its length here.
+  out.status = fd_solve(std::span<const float>(in.data, kInputSize), params_, out.field, &st);
   out.latency_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
   if (!out.status.ok()) { out.field.clear(); return; }
   std::size_t best = 0;

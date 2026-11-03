@@ -191,15 +191,22 @@ void Predictor::predict(const Input& in, Output& out) const noexcept {
   if (out.status.ok()) out.field = std::move(field);
 }
 
-Status Predictor::predict_batch(const float* inputs, std::size_t n, float* fields) const noexcept {
-  if (inputs == nullptr || fields == nullptr) return {StatusCode::InvalidInput, "null buffer"};
-  if (n == 0) return {StatusCode::InvalidInput, "empty batch"};
+Status Predictor::predict_batch(std::span<const float> inputs, std::span<float> fields) const noexcept {
+  // Every length check the (pointer, n, pointer) version could not do: the
+  // span knows how many floats the caller really handed over (S10.1).
+  // A null pointer arrives as an empty span and is rejected as an empty batch.
+  if (inputs.empty()) return {StatusCode::InvalidInput, "empty batch"};
+  if (inputs.size() % kInputSize != 0)
+    return {StatusCode::ShapeMismatch, "inputs hold " + std::to_string(inputs.size()) + " floats, not a multiple of " + std::to_string(kInputSize)};
+  const std::size_t n = inputs.size() / kInputSize;
+  if (fields.size() != n * kCells)
+    return {StatusCode::ShapeMismatch, "fields hold " + std::to_string(fields.size()) + " floats, expected " + std::to_string(n * kCells)};
   if (!impl_->batch_capable && n != 1)
     return {StatusCode::ShapeMismatch, "loaded model has a fixed batch of 1; use models/model_dynamic.onnx"};
-  for (std::size_t i = 0; i < n * kInputSize; ++i)
+  for (std::size_t i = 0; i < inputs.size(); ++i)
     if (!std::isfinite(inputs[i])) return {StatusCode::InvalidInput, "NaN or Inf at flat index " + std::to_string(i)};
   try {
-    impl_->run(inputs, n, fields);
+    impl_->run(inputs.data(), n, fields.data());
   } catch (const Ort::Exception& e) {
     return {StatusCode::InferenceFailed, std::string("ONNX Runtime: ") + e.what()};
   } catch (const std::exception& e) {

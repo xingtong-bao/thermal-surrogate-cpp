@@ -1,10 +1,12 @@
 // tests/test_fd_solver.cpp -- S5.2: the in-process reference converges, is physical, and plugs into the dispatcher;
-//                           S9.1: the parallel red-black sweeps give the same bits as the serial ones
+//                           S9.1: the parallel red-black sweeps give the same bits as the serial ones;
+//                           S10.1: the std::span entry points check lengths and accept slices
 #include <gtest/gtest.h>
 
 #include <cmath>
 #include <cstring>
 #include <memory>
+#include <span>
 #include <vector>
 
 #include "thermal_surrogate/dispatcher.h"
@@ -23,7 +25,7 @@ TEST(FdSolver, ConvergesOnTheFixtureAndRespectsPhysics) {
   const auto x = npy::load_f32(kFix + "sample_input.npy");
   std::vector<float> T(kCells);
   FdSolveStats st;
-  ASSERT_TRUE(fd_solve(x.data.data(), p, T.data(), &st).ok());
+  ASSERT_TRUE(fd_solve(x.data, p, T, &st).ok());
   EXPECT_TRUE(st.converged);
   const float amb = x.data[4];
   float mn = T[0], mx = T[0];
@@ -41,9 +43,9 @@ TEST(FdSolver, AmbientShiftIsExact) {
   const auto p = load_fd_params(kParams);
   auto x = npy::load_f32(kFix + "sample_input.npy");
   std::vector<float> a(kCells), b(kCells);
-  ASSERT_TRUE(fd_solve(x.data.data(), p, a.data()).ok());
+  ASSERT_TRUE(fd_solve(x.data, p, a).ok());
   for (std::size_t i = 0; i < kCells; ++i) x.data[i * kP + 4] += 10.0f;
-  ASSERT_TRUE(fd_solve(x.data.data(), p, b.data()).ok());
+  ASSERT_TRUE(fd_solve(x.data, p, b).ok());
   double worst = 0;
   for (std::size_t i = 0; i < kCells; ++i) worst = std::max(worst, std::fabs(static_cast<double>(b[i] - a[i]) - 10.0));
   EXPECT_LT(worst, 1e-2);
@@ -55,11 +57,11 @@ TEST(FdSolver, PowerScalesTheRise) {
   const auto p = load_fd_params(kParams);
   auto x = npy::load_f32(kFix + "sample_input.npy");
   std::vector<float> a(kCells), b(kCells);
-  ASSERT_TRUE(fd_solve(x.data.data(), p, a.data()).ok());
+  ASSERT_TRUE(fd_solve(x.data, p, a).ok());
   const double amb = x.data[4], r = x.data[6];
   double ptot = 0;
   for (std::size_t i = 0; i < kCells; ++i) x.data[i * kP + 0] *= 1.1f;
-  ASSERT_TRUE(fd_solve(x.data.data(), p, b.data()).ok());
+  ASSERT_TRUE(fd_solve(x.data, p, b).ok());
   (void)ptot; (void)r;
   double worst = 0;
   for (std::size_t i = 0; i < kCells; ++i) worst = std::max(worst, std::fabs((b[i] - amb) / (a[i] - amb) - 1.1));
@@ -165,9 +167,44 @@ TEST(FdSolver, ThreadsParameterDoesNotChangeTheContractAnswer) {
   std::vector<float> a(kCells), b(kCells);
   FdSolveStats sa, sb;
   p.threads = 1;
-  ASSERT_TRUE(fd_solve(x.data.data(), p, a.data(), &sa).ok());
+  ASSERT_TRUE(fd_solve(x.data, p, a, &sa).ok());
   p.threads = 4;
-  ASSERT_TRUE(fd_solve(x.data.data(), p, b.data(), &sb).ok());
+  ASSERT_TRUE(fd_solve(x.data, p, b, &sb).ok());
   EXPECT_EQ(sa.iterations, sb.iterations);
   EXPECT_EQ(0, std::memcmp(a.data(), b.data(), a.size() * sizeof(float)));
+}
+
+TEST(FdSolver, SpanEntryPointsCheckLengthsAndAcceptSlices) {
+  // S10.1: fd_solve / sor_solve / sor_sweep take std::span, so a buffer of the
+  // wrong length is refused up front (with the old raw pointers it would have
+  // been read or written past its end), and a slice of a larger buffer is
+  // accepted without a copy and gives the same bits as a standalone sample.
+  const auto p = load_fd_params(kParams);
+  const auto x = npy::load_f32(kFix + "sample_input.npy");
+  std::vector<float> ref(kCells);
+  ASSERT_TRUE(fd_solve(x.data, p, ref).ok());
+
+  // Wrong lengths: ShapeMismatch, and the output buffer is left alone.
+  std::vector<float> field(kCells, -1.0f);
+  EXPECT_EQ(fd_solve(std::span(x.data).first(kInputSize - 1), p, field).code, StatusCode::ShapeMismatch);
+  EXPECT_EQ(fd_solve({}, p, field).code, StatusCode::ShapeMismatch);   // what a null pointer turns into
+  EXPECT_EQ(field, std::vector<float>(kCells, -1.0f));
+  std::vector<float> short_field(kCells - 1);
+  EXPECT_EQ(fd_solve(x.data, p, short_field).code, StatusCode::ShapeMismatch);
+
+  // Sample 1 of a two-sample batch, passed as a subspan, solves to the same bits.
+  std::vector<float> batch(2 * kInputSize, 0.0f);
+  std::copy(x.data.begin(), x.data.end(), batch.begin() + static_cast<long>(kInputSize));
+  std::vector<float> two(2 * kCells, 0.0f);
+  ASSERT_TRUE(fd_solve(std::span(batch).subspan(kInputSize, kInputSize), p, std::span(two).subspan(kCells)).ok());
+  EXPECT_EQ(0, std::memcmp(two.data() + kCells, ref.data(), kCells * sizeof(float)));
+
+  // The grid-generic core: a temperature buffer of the wrong length is not touched.
+  const auto g = synthetic_grid(64);
+  std::vector<double> wrong(g.cells() - 1, 321.0);
+  const FdSolveStats st = sor_solve(g, 1.8, 1e-4, 100, 1, wrong);
+  EXPECT_EQ(st.iterations, 0);
+  EXPECT_FALSE(st.converged);
+  EXPECT_TRUE(std::isnan(sor_sweep(g, 1.8, 1, wrong)));
+  EXPECT_EQ(wrong, std::vector<double>(g.cells() - 1, 321.0));
 }

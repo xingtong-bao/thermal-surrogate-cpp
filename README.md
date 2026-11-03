@@ -1,12 +1,12 @@
 # thermal-surrogate-cpp
 
 [![ci](https://github.com/xingtong-bao/thermal-surrogate-cpp/actions/workflows/ci.yml/badge.svg)](https://github.com/xingtong-bao/thermal-surrogate-cpp/actions/workflows/ci.yml)
-![C++17](https://img.shields.io/badge/C%2B%2B-17-blue)
+![C++20](https://img.shields.io/badge/C%2B%2B-20-blue)
 ![ONNX Runtime 1.23.2](https://img.shields.io/badge/ONNX%20Runtime-1.23.2-lightgrey)
 ![License MIT](https://img.shields.io/badge/license-MIT-green)
 [中文](README_CH.md)
 
-A C++17 inference library for neural chip-thermal surrogates, built around
+A C++20 inference library for neural chip-thermal surrogates, built around
 the published IC-ThermBench level4 U-Net (7 input maps → 64×64 steady-state
 temperature field). The library validates inputs against a written
 contract, detects out-of-distribution designs, attaches a calibrated error
@@ -38,7 +38,7 @@ repository and links to the file that holds it.
 - **Engineering** — zero-copy input, caller-owned output, thread-safe
   prediction (ThreadSanitizer-checked), OpenMP red-black SOR in the
   reference solver (thread count does not change a single bit of the
-  answer), hash-pinned dependencies, 41 tests,
+  answer), hash-pinned dependencies, `std::span` buffer interfaces that check their lengths, 43 tests,
   CI on Linux.
 
 ## Results
@@ -102,12 +102,12 @@ power density and temperature rise: [docs/failure_analysis.md](docs/failure_anal
 ## Quick start
 
 ```bash
-# prerequisites: cmake >= 3.24, ninja, a C++17 compiler, python3 (fixtures), internet (ONNX Runtime + models)
+# prerequisites: cmake >= 3.24, ninja, a C++20 compiler, python3 (fixtures), internet (ONNX Runtime + models)
 git clone https://github.com/xingtong-bao/thermal-surrogate-cpp && cd thermal-surrogate-cpp
 gh release download models-v1 --dir models          # model.onnx + model_dynamic.onnx (20 MB each)
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
-ctest --test-dir build --output-on-failure        # 41 tests, ~25 s
+ctest --test-dir build --output-on-failure        # 43 tests, ~25 s
 ./build/ts_demo --info                            # runtime version + model IO
 ./build/c_caller models contract tests/fixtures/sample_input.npy   # C ABI example
 ```
@@ -139,8 +139,8 @@ dispatcher.solve_power_scaled(Input{data, kInputShape}, 1.1, out);   // all chip
 ```
 
 Input is a non-owning view of the caller's buffer; `predict_into` writes
-the field into a caller-owned buffer; `predict_batch` runs several samples
-through the dynamic-batch graph. C ABI: [examples/c_caller.c](examples/c_caller.c).
+the field into a caller-owned buffer; `predict_batch(std::span<const float>, std::span<float>)` runs several samples
+through the dynamic-batch graph and rejects buffers whose lengths do not match (C++20 `std::span` carries the length; the C ABI keeps plain pointers). C ABI: [examples/c_caller.c](examples/c_caller.c).
 Python: [python/test_binding.py](python/test_binding.py). Ownership,
 lifetime, threading, error and versioning rules:
 [docs/integration_design.md](docs/integration_design.md).
@@ -223,11 +223,11 @@ ONNX Runtime package.
 
 ## Tests
 
-`ctest` runs 41 tests: `Skeleton.*` (runtime version, model IO),
-`Predictor.*` (construction, rejection paths, parity, zero-copy, batch),
+`ctest` runs 43 tests: `Skeleton.*` (runtime version, model IO),
+`Predictor.*` (construction, rejection paths, parity, zero-copy, batch, span length checks),
 `Validator.*` (each status code, both fixtures, feature extraction),
 `Fixture.*` (dispatcher rules F1–F4), `FdSolver.*` (physics, and parallel
-sweeps bit-identical to serial), `ExternalBackend.*`
+sweeps bit-identical to serial, span length checks), `ExternalBackend.*`
 (protocol, exit codes, timeout), `Concurrency.*`, `AccuracyGate.*`
 (contract gates, schema spellings), `Conformal.*`, `PowerWhatIf.*`.
 

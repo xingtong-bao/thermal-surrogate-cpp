@@ -38,6 +38,7 @@
 #pragma once
 
 #include <cstddef>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -64,8 +65,16 @@ struct FdSolveStats {
   bool converged = false;
 };
 
-// Solve one contract tensor into `field` (kCells floats). Returns Ok or ReferenceFailed.
-Status fd_solve(const float* input, const FdSolverParams& p, float* field, FdSolveStats* stats = nullptr) noexcept;
+// Solve one contract tensor into `field`. Returns Ok, ShapeMismatch or ReferenceFailed.
+//
+// Buffers are std::span (C++20, S10.1): a pointer and a length travel together,
+// so the solver can check them instead of trusting a comment. `input` must hold
+// exactly kInputSize floats and `field` exactly kCells floats, otherwise the
+// call returns ShapeMismatch and touches nothing. A std::vector, a std::array
+// or a slice of a larger batch (std::span(batch).subspan(i * kInputSize,
+// kInputSize)) all convert without a copy.
+Status fd_solve(std::span<const float> input, const FdSolverParams& p, std::span<float> field,
+                FdSolveStats* stats = nullptr) noexcept;
 
 // ---- grid-generic SOR core ------------------------------------------------------
 // fd_solve() builds one of these from the 64x64 contract tensor; bench_sor_scaling
@@ -82,8 +91,14 @@ struct SorGrid {
 };
 
 // One red-black sweep (red half-sweep, then black) in place; returns max |update| in K.
-// `threads` as in FdSolverParams::threads.
-double sor_sweep(const SorGrid& g, double omega, int threads, std::vector<double>& T) noexcept;
+// `threads` as in FdSolverParams::threads. T must hold g.cells() values; on any
+// other length nothing is touched and the result is NaN (S10.1: the span
+// carries its length, so the check costs one comparison).
+//
+// T is std::span<double> rather than std::vector<double>&: the sweep reads and
+// writes values but never resizes, so any contiguous buffer will do (a
+// vector, a pool slice, a buffer owned by a caller in another language).
+double sor_sweep(const SorGrid& g, double omega, int threads, std::span<double> T) noexcept;
 
 // How rows are handed to threads. Static: equal contiguous blocks (best when all
 // cores are alike). Dynamic: chunks of 4 rows on demand (better on
@@ -92,9 +107,10 @@ double sor_sweep(const SorGrid& g, double omega, int threads, std::vector<double
 enum class SorSchedule { Static, Dynamic };
 
 // Sweep until max |update| < tol or max_iter sweeps. T holds the initial guess on
-// entry (sized g.cells()) and the solution on return. With threads > 1 and OpenMP,
-// one parallel region spans the whole iteration (two barriers per sweep).
-FdSolveStats sor_solve(const SorGrid& g, double omega, double tol, int max_iter, int threads, std::vector<double>& T,
+// entry (g.cells() values) and the solution on return; on a wrong length nothing
+// is touched and the stats say 0 iterations, not converged. With threads > 1 and
+// OpenMP, one parallel region spans the whole iteration (two barriers per sweep).
+FdSolveStats sor_solve(const SorGrid& g, double omega, double tol, int max_iter, int threads, std::span<double> T,
                        SorSchedule sched = SorSchedule::Static) noexcept;
 
 // True when the library was built with OpenMP (threads > 1 has an effect).

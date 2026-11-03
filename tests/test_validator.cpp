@@ -36,7 +36,7 @@ TEST(Validator, FeaturesMatchPython) {
   const auto e = expected();
   for (const auto& name : {"sample_input", "sample_input_level5"}) {
     const auto x = npy::load_f32(kFix + name + ".npy");
-    const auto f = Validator::compute_features(x.data.data()).as_array();
+    const auto f = Validator::compute_features(std::span(x.data).first<kInputSize>()).as_array();
     const auto want = e["fixtures"][name]["features"].get<std::vector<double>>();
     for (std::size_t i = 0; i < 6; ++i)
       EXPECT_NEAR(f[i], want[i], 1e-6 * std::max(1.0, std::fabs(want[i]))) << name << " feature " << i;

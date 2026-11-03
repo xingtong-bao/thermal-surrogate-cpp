@@ -51,7 +51,7 @@ echo "archer source: $src/openmp/tools/archer (tag $tag)"
 
 extra=()
 [[ "$ext" == dylib ]] && extra=(-undefined dynamic_lookup)
-clang++ -std=c++17 -O2 -fPIC -shared -I"$inc" "${extra[@]}" \
+clang++ -std=c++20 -O2 -fPIC -shared -I"$inc" "${extra[@]}" \
   "$src/openmp/tools/archer/ompt-tsan.cpp" -o "$out/libarcher.$ext"
 echo "built $out/libarcher.$ext"
 echo "run tests with: OMP_TOOL_LIBRARIES=$out/libarcher.$ext TSAN_OPTIONS=ignore_noninstrumented_modules=1 ./build-tsan/ts_tests --gtest_filter='FdSolver.*'"

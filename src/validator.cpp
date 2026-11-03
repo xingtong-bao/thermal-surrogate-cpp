@@ -16,14 +16,14 @@
 namespace thermal_surrogate {
 namespace {
 
-inline float at(const float* d, std::size_t x, std::size_t y, Channel c) {
+inline float at(TensorView d, std::size_t x, std::size_t y, Channel c) {
   // (X, Y, Z=1, P) C order: index = ((x * kY + y) * kZ + 0) * kP + p
   return d[(x * kY + y) * kP + static_cast<std::size_t>(c)];
 }
 
 // Largest positive step of a coordinate map along either axis. The map varies
 // along exactly one axis (contract section 2), so max over both is that step.
-double spacing(const float* d, Channel c) {
+double spacing(TensorView d, Channel c) {
   double best = 0.0;
   for (std::size_t x = 0; x < kX; ++x)
     for (std::size_t y = 0; y < kY; ++y) {
@@ -35,7 +35,7 @@ double spacing(const float* d, Channel c) {
 
 }  // namespace
 
-ConfigFeatures Validator::compute_features(const float* d) {
+ConfigFeatures Validator::compute_features(TensorView d) {
   ConfigFeatures f;
   // Chip extent and cell area from the coordinate channels.
   double gx_max = 0, gy_max = 0;
@@ -149,7 +149,9 @@ ValidationReport Validator::validate(const Input& in) const noexcept {
   }
 
   // I5 -- nearest training configuration in standardized feature space.
-  r.features = compute_features(in.data);
+  // I1/I2 above already rejected a null pointer and a wrong shape, so the
+  // buffer holds exactly kInputSize floats and the fixed-length view is safe.
+  r.features = compute_features(TensorView(in.data, kInputSize));
   const auto f = r.features.as_array();
   std::array<double, 6> z{};
   for (std::size_t c = 0; c < 6; ++c) z[c] = (f[c] - mean_[c]) / std_[c];

@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
   // 1 + 2: batch size, both layouts.
   for (int b : batches) {
     record("predict_batch(model_dynamic)", "contract (B,X,Y,Z,P)", b,
-           median_ms(repeat, [&] { auto s = dyn.predict_batch(in_nhwc.data(), static_cast<std::size_t>(b), out.data()); if (!s.ok()) throw std::runtime_error(s.message); }),
+           median_ms(repeat, [&] { auto s = dyn.predict_batch(std::span(in_nhwc).first(static_cast<std::size_t>(b) * ts::kInputSize), std::span(out).first(static_cast<std::size_t>(b) * ts::kCells)); if (!s.ok()) throw std::runtime_error(s.message); }),
            "zero-copy");
     record("raw session(model_nchw_dynamic)", "NCHW (B,P,X,Y)", b, median_ms(repeat, [&] { run_nchw(b); }), "zero-copy");
   }
@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
   // Correctness guard: the batched result must equal the single result per sample (gate 1e-4 K).
   std::vector<float> single(ts::kCells);
   fixed.predict_into(in1, single.data(), o);
-  dyn.predict_batch(in_nhwc.data(), 64, out.data());
+  dyn.predict_batch(in_nhwc, out);
   double worst = 0;
   for (int b = 0; b < 64; ++b)
     for (std::size_t i = 0; i < ts::kCells; ++i)

@@ -16,6 +16,7 @@
 #pragma once
 
 #include <memory>
+#include <span>
 #include <string>
 
 #include "thermal_surrogate/types.h"
@@ -54,7 +55,14 @@ class Predictor {
   // (models/model_dynamic.onnx); on the fixed-shape model returns
   // ShapeMismatch. Per-sample results are numerically the batched kernel's:
   // may differ from predict() by float32 accumulation order (see S3.2).
-  Status predict_batch(const float* inputs, std::size_t n, float* fields) const noexcept;
+  //
+  // S10.1 (C++20): the buffers are std::span instead of (pointer, n, pointer).
+  // n is no longer a separate argument that can disagree with the buffers: it
+  // is inputs.size() / kInputSize. Returns InvalidInput on an empty batch and
+  // ShapeMismatch when inputs is not a whole number of tensors or fields is
+  // not exactly n * kCells floats; nothing is read or written in that case.
+  // Part of a larger buffer goes in as std::span(buf).first(b * kInputSize).
+  Status predict_batch(std::span<const float> inputs, std::span<float> fields) const noexcept;
 
   bool batch_capable() const;                 // true when the loaded graph has a dynamic batch axis
 

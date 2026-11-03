@@ -9,6 +9,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -25,6 +26,15 @@ constexpr std::size_t kCells = kX * kY * kZ;                    // 4096
 constexpr std::size_t kInputSize = kCells * kP;                 // 28672 floats
 constexpr std::array<std::size_t, 4> kInputShape{kX, kY, kZ, kP};
 constexpr std::array<std::size_t, 3> kOutputShape{kX, kY, kZ};
+
+// One contract tensor as a read-only view whose length is part of the type
+// (C++20 fixed-extent std::span, S10.1). A function taking TensorView cannot
+// be handed 100 floats by mistake: the compiler refuses a std::array of the
+// wrong size, and a runtime-sized buffer must be converted explicitly, after a
+// length check, with std::span(buf).first<kInputSize>(). Used inside the
+// library where the length is already known (validator features, FD solver);
+// entry points that take caller buffers use dynamic spans and check at runtime.
+using TensorView = std::span<const float, kInputSize>;
 
 // Channel order is part of the contract; the index is the P coordinate.
 enum class Channel : std::uint8_t {

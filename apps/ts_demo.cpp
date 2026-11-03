@@ -14,6 +14,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <span>
 #include <vector>
 #include <cstdlib>
 #include <cstring>
@@ -108,7 +109,8 @@ int cmd_parity(const std::string& model, const std::string& dir, const std::stri
 struct SetView {
   ts::npy::Array x, y;
   std::size_t n() const { return x.shape[0]; }
-  const float* in(std::size_t i) const { return x.data.data() + i * ts::kInputSize; }
+  // Sample i as a slice of the whole set: subspan keeps pointer and length together (S10.1).
+  std::span<const float> in(std::size_t i) const { return std::span(x.data).subspan(i * ts::kInputSize, ts::kInputSize); }
   const float* truth(std::size_t i) const { return y.data.data() + i * ts::kCells; }
 };
 
@@ -126,7 +128,7 @@ double set_mae(const SetView& s, const ts::FdSolverParams& p, double* tmax_err =
   double sum = 0, tsum = 0;
   const auto t0 = std::chrono::steady_clock::now();
   for (std::size_t i = 0; i < s.n(); ++i) {
-    if (!ts::fd_solve(s.in(i), p, field.data()).ok()) return std::nan("");
+    if (!ts::fd_solve(s.in(i), p, field).ok()) return std::nan("");
     double acc = 0, fmax = field[0], tmax = s.truth(i)[0];
     for (std::size_t c = 0; c < ts::kCells; ++c) {
       acc += std::fabs(static_cast<double>(field[c]) - s.truth(i)[c]);
@@ -142,7 +144,7 @@ double set_mae(const SetView& s, const ts::FdSolverParams& p, double* tmax_err =
 // Per-sample lumped quantities the calibration regresses on.
 struct Lumped { double P, r, amb, truth_min, truth_mean; };
 Lumped lumped(const SetView& s, std::size_t i) {
-  const float* x = s.in(i);
+  const std::span<const float> x = s.in(i);
   std::vector<int> seen(ts::kCells, 0);
   double P = 0;
   // Total power = sum over chiplets (connected components of equal power), as in the validator.
@@ -206,7 +208,7 @@ int cmd_fd_calibrate(const std::string& inputs, const std::string& truth, const 
     std::vector<float> field(ts::kCells);
     std::vector<double> yy;
     for (std::size_t i = 0; i < s.n(); ++i) {
-      ts::fd_solve(s.in(i), p0, field.data());
+      ts::fd_solve(s.in(i), p0, field);
       double m = 0; for (float f : field) m += f;
       yy.push_back(L[i].truth_mean - (m / static_cast<double>(ts::kCells)));   // = P(alpha r + beta) since local-only field already includes T_amb
     }
@@ -237,7 +239,7 @@ int cmd_fd_validate(const std::string& inputs, const std::string& truth, std::si
   for (std::size_t i = 0; i < s.n(); ++i) {
     ts::FdSolveStats st;
     const auto t0 = std::chrono::steady_clock::now();
-    const auto status = ts::fd_solve(s.in(i), p, field.data(), &st);
+    const auto status = ts::fd_solve(s.in(i), p, field, &st);
     const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
     if (!status.ok()) throw std::runtime_error("solve " + std::to_string(i) + " failed: " + status.message);
     double acc = 0, mx = 0, fmax = field[0], tmax = s.truth(i)[0];
@@ -308,7 +310,7 @@ int cmd_compare(const std::string& label, const std::string& inputs, const std::
         << (o.oob_flag ? 1 : 0) << "," << mae << "," << terr << "," << mx << "," << o.latency_ms << "," << o.mae_bound_90_K << "\n";
   };
   for (std::size_t i = 0; i < s.n(); ++i) {
-    const ts::Input in{s.in(i), ts::kInputShape};
+    const ts::Input in{s.in(i).data(), ts::kInputShape};
     ts::Output o;
     sur.solve(in, o); row(i, "surrogate", o);
     fd.solve(in, o); row(i, "fd_solver", o);

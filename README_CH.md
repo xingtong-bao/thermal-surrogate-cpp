@@ -1,12 +1,12 @@
 # thermal-surrogate-cpp
 
 [![ci](https://github.com/xingtong-bao/thermal-surrogate-cpp/actions/workflows/ci.yml/badge.svg)](https://github.com/xingtong-bao/thermal-surrogate-cpp/actions/workflows/ci.yml)
-![C++17](https://img.shields.io/badge/C%2B%2B-17-blue)
+![C++20](https://img.shields.io/badge/C%2B%2B-20-blue)
 ![ONNX Runtime 1.23.2](https://img.shields.io/badge/ONNX%20Runtime-1.23.2-lightgrey)
 ![License MIT](https://img.shields.io/badge/license-MIT-green)
 [English](README.md)
 
-面向芯片热仿真神经网络代理模型的 C++17 推理库，以公开的 IC-ThermBench level4 U-Net（7 张输入图 → 64×64 稳态温度场）为对象。库按书面合同校验输入、检测分布外的设计、给每次预测附带标定过的误差界、在模型不可信时回退到物理求解器，并提供更新、把关和发布新模型版本的工具链。本文件里的每个数字都在本仓库实测，并链接到保存它的文件。
+面向芯片热仿真神经网络代理模型的 C++20 推理库，以公开的 IC-ThermBench level4 U-Net（7 张输入图 → 64×64 稳态温度场）为对象。库按书面合同校验输入、检测分布外的设计、给每次预测附带标定过的误差界、在模型不可信时回退到物理求解器，并提供更新、把关和发布新模型版本的工具链。本文件里的每个数字都在本仓库实测，并链接到保存它的文件。
 
 ![架构](docs/figures/architecture.png)
 
@@ -19,7 +19,7 @@
 - **模型生命周期** — 用求解器答案或增强数据微调、导出 ONNX、对拍、重标定误差界、在全量测试集上跑发布门槛的脚本。
 - **与模型无关** — U-Net、U-FNO（谱层改写为矩阵乘后导出）和集成模型通过同一 API 加载。
 - **绑定** — 不透明句柄的 C 接口（`ts_c_api.h`）、pybind11 模块。
-- **工程** — 零拷贝输入、调用方拥有输出、线程安全预测（ThreadSanitizer 验证）、参考求解器的 OpenMP 红黑 SOR（线程数不改变结果的任何一位）、哈希钉死的依赖、41 个测试、Linux CI。
+- **工程** — 零拷贝输入、调用方拥有输出、线程安全预测（ThreadSanitizer 验证）、参考求解器的 OpenMP 红黑 SOR（线程数不改变结果的任何一位）、哈希钉死的依赖、会检查长度的 `std::span` 缓冲区接口、43 个测试、Linux CI。
 
 ## 结果
 
@@ -74,12 +74,12 @@
 ## 快速开始
 
 ```bash
-# 依赖：cmake >= 3.24、ninja、C++17 编译器、python3（fixture）、网络（ONNX Runtime 与模型）
+# 依赖：cmake >= 3.24、ninja、C++20 编译器、python3（fixture）、网络（ONNX Runtime 与模型）
 git clone https://github.com/xingtong-bao/thermal-surrogate-cpp && cd thermal-surrogate-cpp
 gh release download models-v1 --dir models          # model.onnx + model_dynamic.onnx（各 20 MB）
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
-ctest --test-dir build --output-on-failure        # 41 个测试，约 20 秒
+ctest --test-dir build --output-on-failure        # 43 个测试，约 20 秒
 ./build/ts_demo --info                            # 运行时版本 + 模型 IO
 ./build/c_caller models contract tests/fixtures/sample_input.npy   # C 接口示例
 ```
@@ -107,7 +107,7 @@ if (out.status.ok()) use(out.field, out.tmax, out.mae_bound_90_K, out.source, ou
 dispatcher.solve_power_scaled(Input{data, kInputShape}, 1.1, out);   // 所有芯粒功率 +10%
 ```
 
-输入是调用方缓冲区的非拥有视图；`predict_into` 把温度场写入调用方自己的缓冲区；`predict_batch` 用动态批量图跑多个样本。C 接口：[examples/c_caller.c](examples/c_caller.c)。Python：[python/test_binding.py](python/test_binding.py)。所有权、生命周期、线程、错误与版本规则：[docs/integration_design.md](docs/integration_design.md)。
+输入是调用方缓冲区的非拥有视图；`predict_into` 把温度场写入调用方自己的缓冲区；`predict_batch` 用动态批量图跑多个样本，参数是 C++20 的 `std::span`，长度对不上就直接拒绝（C 接口仍是普通指针）。C 接口：[examples/c_caller.c](examples/c_caller.c)。Python：[python/test_binding.py](python/test_binding.py)。所有权、生命周期、线程、错误与版本规则：[docs/integration_design.md](docs/integration_design.md)。
 
 ## 合同
 

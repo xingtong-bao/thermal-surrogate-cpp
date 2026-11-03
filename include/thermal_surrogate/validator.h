@@ -52,7 +52,10 @@ class Validator {
   ValidationReport validate(const Input& in) const noexcept;
 
   // Exposed for tests and for the Python bridge.
-  static ConfigFeatures compute_features(const float* data);   // data: (64,64,1,7) C order
+  // data: one (64,64,1,7) tensor in C order. TensorView fixes the length in
+  // the type (S10.1); from a vector of unknown length call it as
+  // compute_features(std::span(v).first<kInputSize>()) after checking the size.
+  static ConfigFeatures compute_features(TensorView data);
   double oob_scale() const { return oob_scale_; }
   double novelty_threshold() const { return threshold_; }
   std::size_t bank_size() const { return bank_.size() / 6; }
