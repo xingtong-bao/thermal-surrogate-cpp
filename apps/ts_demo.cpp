@@ -281,7 +281,7 @@ int cmd_compare(const std::string& label, const std::string& inputs, const std::
   eo.timeout_s = 120.0;
   ts::ExternalReferenceBackend ext(eo);
 
-  // The dispatcher as the contract prescribes: surrogate -> in-process -> external.
+  // Contract section 5, rule F2: surrogate -> external (HotSpot, when configured) -> in-process FD.
   std::vector<std::unique_ptr<ts::ISolverBackend>> chain;
   chain.push_back(std::make_unique<ts::SurrogateBackend>(pred));
   if (!external_cmd.empty()) chain.push_back(std::make_unique<ts::ExternalReferenceBackend>(eo));

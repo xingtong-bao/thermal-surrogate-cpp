@@ -4,8 +4,10 @@
 //   1. Validator: I1-I3 hard reject -> return the status, nothing runs.
 //   2. I4/I5 out of distribution -> the surrogate is skipped (rule F1),
 //      reference backends are tried in order.
-//   3. Otherwise backends are tried in the order given: surrogate first,
-//      then in-process reference, then external reference (rule F2).
+//   3. Otherwise backends are tried in the order the caller gives: surrogate
+//      first, then the reference backends (rule F2). ts_demo uses
+//      surrogate -> external (HotSpot) -> in-process FD; the C ABI engine uses
+//      surrogate -> in-process FD.
 //   4. A backend that reports a failure (InferenceFailed, ReferenceFailed,
 //      Timeout) is skipped and the next one is tried (rule F3); the last
 //      failure is reported if nothing succeeds (rule F4).
