@@ -1,7 +1,15 @@
-// src/external_backend.cpp -- see external_backend.h. POSIX only (fork/exec + waitpid polling).
+// src/external_backend.cpp -- see external_backend.h. POSIX only (posix_spawnp + waitpid polling).
+//
+// Why posix_spawnp and not fork + exec: the library is meant to live inside a
+// large, multithreaded host application. fork() duplicates the host's page
+// tables (costly for a multi-GB process, and refused under strict memory
+// overcommit) and leaves the child with one thread and only async-signal-safe
+// calls until exec. posix_spawnp creates the child and runs the solver in one
+// call without copying the parent's address space.
 #include "thermal_surrogate/external_backend.h"
 
 #include <signal.h>
+#include <spawn.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -13,6 +21,17 @@
 
 #include "thermal_surrogate/npy.h"
 
+// The current environment, passed on to the solver. macOS bundles and dylibs (the
+// pybind11 module links this file) cannot see `environ` directly; Apple's
+// documented accessor is _NSGetEnviron().
+#if defined(__APPLE__)
+#include <crt_externs.h>
+static char** current_environ() { return *_NSGetEnviron(); }
+#else
+extern char** environ;
+static char** current_environ() { return environ; }
+#endif
+
 namespace thermal_surrogate {
 namespace {
 
@@ -21,12 +40,9 @@ std::pair<int, bool> run_with_timeout(const std::vector<std::string>& argv, doub
   std::vector<char*> cargv;
   for (const auto& a : argv) cargv.push_back(const_cast<char*>(a.c_str()));
   cargv.push_back(nullptr);
-  const pid_t pid = fork();
-  if (pid < 0) return {-1, false};
-  if (pid == 0) {
-    execvp(cargv[0], cargv.data());
-    _exit(127);                                       // exec failed
-  }
+  pid_t pid = 0;
+  // Searches PATH like execvp; a non-zero return means the solver could not be started.
+  if (posix_spawnp(&pid, cargv[0], nullptr, nullptr, cargv.data(), current_environ()) != 0) return {-1, false};
   const auto deadline = std::chrono::steady_clock::now() + std::chrono::duration<double>(timeout_s);
   int status = 0;
   while (true) {
@@ -40,6 +56,7 @@ std::pair<int, bool> run_with_timeout(const std::vector<std::string>& argv, doub
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
+  if (WIFSIGNALED(status)) return {128 + WTERMSIG(status), false};   // shell convention for a killed child
   return {WIFEXITED(status) ? WEXITSTATUS(status) : -1, false};
 }
 
@@ -66,7 +83,10 @@ void ExternalReferenceBackend::solve(const Input& in, Output& out) noexcept {
     argv.push_back(out_path);
     const auto [code, timed_out] = run_with_timeout(argv, opt_.timeout_s);
     if (timed_out) { out.status = {StatusCode::Timeout, "external reference exceeded " + std::to_string(opt_.timeout_s) + " s"}; }
-    else if (code != 0) { out.status = {StatusCode::ReferenceFailed, "external reference exited with code " + std::to_string(code)}; }
+    else if (code != 0) {
+      out.status = {StatusCode::ReferenceFailed, code == -1 ? "external reference could not be started or monitored"
+                                                            : "external reference exited with code " + std::to_string(code)};
+    }
     else {
       auto field = npy::load_f32(out_path);
       if (field.size() != kCells) { out.status = {StatusCode::ReferenceFailed, "external reference wrote " + std::to_string(field.size()) + " values, expected 4096"}; }
