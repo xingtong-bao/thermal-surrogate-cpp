@@ -1,8 +1,8 @@
 // thermal_surrogate/backend.h -- the interface every solver implements
 //
 // A backend turns one Input into one Output. The dispatcher (S5.1) owns a
-// list of them and tries them in contract order: surrogate, in-process
-// reference, external reference. Keeping the interface this small is what
+// list of them and tries them in the order the caller configures (contract
+// section 5, rule F2). Keeping the interface this small is what
 // lets a 2-D finite-difference solver, a HotSpot subprocess and an ONNX
 // session be interchangeable in tests.
 #pragma once
